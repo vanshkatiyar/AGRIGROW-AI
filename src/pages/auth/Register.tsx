@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -17,6 +18,7 @@ interface RegisterForm {
   confirmPassword: string;
   location: string;
   bio?: string;
+  role: 'farmer' | 'buyer' | 'expert';
 }
 
 const Register = () => {
@@ -44,7 +46,8 @@ const Register = () => {
       email: data.email,
       password: data.password,
       location: data.location,
-      bio: data.bio
+      bio: data.bio,
+      role: data.role
     });
     
     if (success) {
@@ -163,6 +166,26 @@ const Register = () => {
                     <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
                   )}
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="role">I am a:</Label>
+                <Select 
+                  {...register('role', { required: 'Please select your role' })}
+                  onValueChange={(value) => register('role').onChange({ target: { value } })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="farmer">🌾 Farmer</SelectItem>
+                    <SelectItem value="buyer">🛒 Buyer/Trader</SelectItem>
+                    <SelectItem value="expert">👨‍🌾 Agricultural Expert</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.role && (
+                  <p className="text-sm text-destructive">{errors.role.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">

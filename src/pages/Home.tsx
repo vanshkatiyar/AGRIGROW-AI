@@ -20,10 +20,24 @@ import { mockPosts, mockWeatherData } from '@/services/mockData';
 const Home = () => {
   const { user } = useAuth();
 
+  // Redirect to role-specific dashboard
+  if (user?.role === 'farmer') {
+    window.location.href = '/farmer-dashboard';
+    return null;
+  }
+  if (user?.role === 'buyer') {
+    window.location.href = '/buyer-dashboard';
+    return null;
+  }
+  if (user?.role === 'expert') {
+    window.location.href = '/expert-dashboard';
+    return null;
+  }
+
   const stats = [
     { label: 'Posts', value: '156', icon: Users, trend: '+12%' },
     { label: 'Sales', value: '₹45,600', icon: ShoppingBag, trend: '+8%' },
-    { label: 'Followers', value: user?.followers || 0, icon: TrendingUp, trend: '+15%' },
+    { label: 'Followers', value: user?.roleData?.farmer?.followers || user?.roleData?.buyer?.totalPurchases || user?.roleData?.expert?.totalConsultations || 0, icon: TrendingUp, trend: '+15%' },
     { label: 'Messages', value: '23', icon: MessageCircle, trend: '+5%' }
   ];
 
@@ -46,13 +60,13 @@ const Home = () => {
                 Welcome back, {user?.name}! 👋
               </h1>
               <p className="text-muted-foreground">
-                {user?.location} • {user?.crops?.join(', ')}
+                {user?.location} • {user?.roleData?.farmer?.crops?.join(', ') || user?.roleData?.buyer?.companyName || user?.roleData?.expert?.specializations?.join(', ') || 'No specialization'}
               </p>
-              {user?.verified && (
-                <Badge variant="secondary" className="mt-2">
-                  ✓ Verified Farmer
-                </Badge>
-              )}
+               {user?.verified && (
+                 <Badge variant="secondary" className="mt-2">
+                   ✓ Verified {user?.role === 'farmer' ? 'Farmer' : user?.role === 'buyer' ? 'Buyer' : 'Expert'}
+                 </Badge>
+               )}
             </div>
             <Button className="bg-gradient-to-r from-primary to-primary-glow">
               <Plus className="h-4 w-4 mr-2" />

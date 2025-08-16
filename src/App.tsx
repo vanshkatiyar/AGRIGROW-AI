@@ -13,6 +13,9 @@ import Marketplace from "./pages/Marketplace";
 import Weather from "./pages/Weather";
 import Login from "./pages/auth/Login";
 import NotFound from "./pages/NotFound";
+import FarmerDashboard from "./pages/farmer/FarmerDashboard";
+import BuyerDashboard from "./pages/buyer/BuyerDashboard";
+import ExpertDashboard from "./pages/expert/ExpertDashboard";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +34,21 @@ const App = () => (
             <Route path="/" element={
               <ProtectedRoute>
                 <Home />
+              </ProtectedRoute>
+            } />
+            <Route path="/farmer-dashboard" element={
+              <ProtectedRoute>
+                <FarmerDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/buyer-dashboard" element={
+              <ProtectedRoute>
+                <BuyerDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/expert-dashboard" element={
+              <ProtectedRoute>
+                <ExpertDashboard />
               </ProtectedRoute>
             } />
             <Route path="/feed" element={
