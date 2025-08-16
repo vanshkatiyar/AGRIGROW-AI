@@ -3,24 +3,79 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import { AuthProvider } from "@/context/AuthContext";
+import { ProtectedRoute } from "@/components/common/ProtectedRoute";
+
+// Pages
+import Home from "./pages/Home";
+import Feed from "./pages/Feed";
+import Marketplace from "./pages/Marketplace";
+import Weather from "./pages/Weather";
+import Login from "./pages/auth/Login";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* Auth Routes */}
+            <Route path="/auth/login" element={<Login />} />
+            
+            {/* Protected Routes */}
+            <Route path="/" element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            } />
+            <Route path="/feed" element={
+              <ProtectedRoute>
+                <Feed />
+              </ProtectedRoute>
+            } />
+            <Route path="/marketplace" element={
+              <ProtectedRoute>
+                <Marketplace />
+              </ProtectedRoute>
+            } />
+            <Route path="/weather" element={
+              <ProtectedRoute>
+                <Weather />
+              </ProtectedRoute>
+            } />
+            <Route path="/messages" element={
+              <ProtectedRoute>
+                <div className="min-h-screen flex items-center justify-center">
+                  <p>Messages - Coming Soon</p>
+                </div>
+              </ProtectedRoute>
+            } />
+            <Route path="/qa" element={
+              <ProtectedRoute>
+                <div className="min-h-screen flex items-center justify-center">
+                  <p>Q&A Hub - Coming Soon</p>
+                </div>
+              </ProtectedRoute>
+            } />
+            <Route path="/prices" element={
+              <ProtectedRoute>
+                <div className="min-h-screen flex items-center justify-center">
+                  <p>Price Alerts - Coming Soon</p>
+                </div>
+              </ProtectedRoute>
+            } />
+            
+            {/* Catch-all */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
