@@ -51,22 +51,22 @@ const ExpertDashboard = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto p-6 space-y-6">
+      <div className="container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 rounded-xl p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-foreground">Expert Dashboard</h1>
               <p className="text-muted-foreground mt-1">
                 Welcome back, {user?.name}! Manage consultations and share knowledge.
               </p>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex flex-wrap items-center gap-2 mt-2">
                 {user?.roleData?.expert?.specializations?.map((spec, index) => (
                   <Badge key={index} variant="secondary">{spec}</Badge>
                 ))}
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
               <Button className="bg-orange-600 hover:bg-orange-700">
                 <FileText className="h-4 w-4 mr-2" />
                 Write Article
@@ -107,7 +107,7 @@ const ExpertDashboard = () => {
               <CardContent className="space-y-4">
                 {mockConsultationRequests.map((consultation) => (
                   <div key={consultation.id} className="border border-border rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex flex-col sm:flex-row items-start justify-between mb-3 gap-2">
                       <div className="flex items-start gap-3">
                         <Avatar className="h-10 w-10">
                           <AvatarImage src="/api/placeholder/40/40" />
@@ -119,8 +119,8 @@ const ExpertDashboard = () => {
                           <p className="text-sm mt-1">{consultation.issue}</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="flex gap-2">
+                      <div className="text-left sm:text-right w-full sm:w-auto">
+                        <div className="flex gap-2 justify-start sm:justify-end">
                           <Badge className={urgencyColors[consultation.urgency]}>
                             {consultation.urgency}
                           </Badge>
@@ -132,28 +132,28 @@ const ExpertDashboard = () => {
                       </div>
                     </div>
                     
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span>Submitted: {new Date(consultation.submittedDate).toLocaleDateString()}</span>
                         {consultation.images.length > 0 && (
-                          <span>{consultation.images.length} images attached</span>
+                          <span>{consultation.images.length} images</span>
                         )}
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 w-full sm:w-auto">
                         {consultation.status === 'pending' && (
                           <>
-                            <Button size="sm" variant="outline">
+                            <Button size="sm" variant="outline" className="flex-1">
                               <AlertCircle className="h-4 w-4 mr-1" />
-                              View Details
+                              Details
                             </Button>
-                            <Button size="sm">
+                            <Button size="sm" className="flex-1">
                               <CheckCircle className="h-4 w-4 mr-1" />
                               Accept
                             </Button>
                           </>
                         )}
                         {consultation.status === 'in-progress' && (
-                          <Button size="sm">
+                          <Button size="sm" className="w-full">
                             Continue
                           </Button>
                         )}

@@ -35,17 +35,17 @@ const BuyerDashboard = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto p-6 space-y-6">
+      <div className="container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-xl p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-foreground">Buyer Dashboard</h1>
               <p className="text-muted-foreground mt-1">
                 Welcome back, {user?.name}! Manage your purchases and suppliers.
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
               <Button className="bg-blue-600 hover:bg-blue-700">
                 <ShoppingCart className="h-4 w-4 mr-2" />
                 Browse Marketplace

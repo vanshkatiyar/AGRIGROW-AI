@@ -45,17 +45,17 @@ const Home = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto p-6 space-y-6">
+      <div className="container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
         {/* Welcome Section */}
         <div className="bg-gradient-to-r from-primary/10 via-primary-glow/10 to-accent/10 rounded-xl p-6">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
             <Avatar className="h-16 w-16 border-4 border-white shadow-lg">
               <AvatarImage src={user?.profileImage} alt={user?.name} />
               <AvatarFallback className="bg-primary text-primary-foreground text-xl">
                 {user?.name?.charAt(0)}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1">
+            <div className="flex-1 text-center sm:text-left">
               <h1 className="text-2xl font-bold text-foreground">
                 Welcome back, {user?.name}! 👋
               </h1>
@@ -68,7 +68,7 @@ const Home = () => {
                  </Badge>
                )}
             </div>
-            <Button className="bg-gradient-to-r from-primary to-primary-glow">
+            <Button className="bg-gradient-to-r from-primary to-primary-glow w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Create Post
             </Button>

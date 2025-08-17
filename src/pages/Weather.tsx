@@ -1,21 +1,48 @@
+import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useMutation } from '@tanstack/react-query';
+import { getWeatherAndForecast } from '@/services/weatherService';
+import { useUserLocation } from '@/hooks/useUserLocation';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   CloudSun, 
   Droplets, 
-  Wind, 
-  Eye,
+  Wind,
   Thermometer,
-  Calendar,
   AlertTriangle,
-  TrendingUp,
-  Lightbulb
+  Search,
+  Calendar,
+  MapPin
 } from 'lucide-react';
-import { mockWeatherData } from '@/services/mockData';
 
 const Weather = () => {
-  const { current, forecast, farmingTips } = mockWeatherData;
+  const [city, setCity] = useState('');
+  const { coordinates, error: locationError, isLoading: isLoadingLocation } = useUserLocation();
+
+  const mutation = useMutation({
+    mutationFn: (query: { city: string } | { lat: number; lon: number }) => getWeatherAndForecast(query),
+    onSuccess: (data) => {
+        setCity(data.current.location.split(',')[0]);
+    }
+  });
+
+  // Effect to auto-fetch weather when coordinates are available
+  useEffect(() => {
+    if (coordinates) {
+      mutation.mutate({ lat: coordinates.latitude, lon: coordinates.longitude });
+    }
+  }, [coordinates]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (city.trim()) {
+      mutation.mutate({ city: city.trim() });
+    }
+  };
 
   const getTemperatureColor = (temp: number) => {
     if (temp >= 35) return 'text-red-500';
@@ -24,221 +51,98 @@ const Weather = () => {
     return 'text-blue-500';
   };
 
-  const getPrecipitationLevel = (precipitation: number) => {
-    if (precipitation >= 70) return { label: 'Heavy', color: 'bg-red-500' };
-    if (precipitation >= 30) return { label: 'Moderate', color: 'bg-yellow-500' };
-    if (precipitation > 0) return { label: 'Light', color: 'bg-blue-500' };
-    return { label: 'None', color: 'bg-gray-300' };
+  const renderContent = () => {
+    if (isLoadingLocation) {
+        return (
+          <div className="flex flex-col items-center justify-center h-64 gap-4">
+            <MapPin className="h-8 w-8 text-primary animate-pulse" />
+            <p className="text-muted-foreground">Detecting your location...</p>
+          </div>
+        );
+    }
+
+    if (mutation.isPending) {
+      return (
+        <div className="flex flex-col items-center justify-center h-64 gap-4">
+          <LoadingSpinner size="lg" />
+        </div>
+      );
+    }
+
+    const errorToShow = mutation.isError ? mutation.error.message : locationError;
+    if (errorToShow && !mutation.data) {
+        return (
+            <div className="text-center py-12">
+                <Alert variant="destructive" className="mt-6 max-w-md mx-auto">
+                   <AlertTriangle className="h-4 w-4" />
+                   <AlertTitle>Could not fetch weather</AlertTitle>
+                   <AlertDescription>{errorToShow}</AlertDescription>
+               </Alert>
+            </div>
+        );
+    }
+    
+    if (mutation.isSuccess && mutation.data) {
+      const { current, forecast } = mutation.data;
+      return (
+        <div className="space-y-6 mt-6 animate-in fade-in-50">
+          <Card className="bg-gradient-to-br from-primary/5 via-primary-glow/5 to-accent/5">
+            <CardHeader><CardTitle className="flex items-center gap-2"><CloudSun className="h-6 w-6" />Current Weather</CardTitle><CardDescription>{current.location}</CardDescription></CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="flex items-center justify-center md:justify-start gap-4 mb-4"><div className="text-6xl">{current.icon}</div><div><div className={`text-5xl font-bold ${getTemperatureColor(current.temperature)}`}>{current.temperature}°C</div><div className="text-lg text-muted-foreground capitalize">{current.description}</div></div></div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2"><Droplets className="h-5 w-5 text-blue-500" /><div><div className="text-sm text-muted-foreground">Humidity</div><div className="font-semibold">{current.humidity}%</div></div></div>
+                  <div className="flex items-center gap-2"><Wind className="h-5 w-5 text-gray-500" /><div><div className="text-sm text-muted-foreground">Wind</div><div className="font-semibold">{current.wind_speed} km/h</div></div></div>
+                  <div className="flex items-center gap-2"><Thermometer className="h-5 w-5 text-red-500" /><div><div className="text-sm text-muted-foreground">Feels Like</div><div className="font-semibold">{current.feels_like}°C</div></div></div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5" />5-Day Forecast</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              {forecast.map((day, index) => (
+                <div key={index} className="flex flex-col sm:flex-row items-center justify-between p-3 border-b last:border-b-0">
+                  <div className="w-full sm:w-1/4 text-center sm:text-left mb-2 sm:mb-0"><p className="font-semibold">{new Date(day.date).toLocaleDateString('en-US', { weekday: 'long' })}</p><p className="text-xs text-muted-foreground">{new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p></div>
+                  <div className="flex items-center gap-2 text-2xl w-full sm:w-auto justify-center mb-2 sm:mb-0">{day.icon}<span className="text-lg font-medium capitalize">{day.condition}</span></div>
+                  <div className="flex items-center justify-around w-full sm:w-1/2">
+                    <div className="text-center px-2"><p className={`font-bold ${getTemperatureColor(day.high)}`}>{day.high}°</p><p className="text-xs text-muted-foreground">High</p></div>
+                    <div className="text-center px-2"><p className="font-bold text-muted-foreground">{day.low}°</p><p className="text-xs text-muted-foreground">Low</p></div>
+                    <div className="text-center px-2"><p className="font-bold text-blue-500">{day.precipitation}%</p><p className="text-xs text-muted-foreground">Rain</p></div>
+                    <div className="text-center px-2"><p className="font-bold text-gray-500">{day.wind_speed} km/h</p><p className="text-xs text-muted-foreground">Wind</p></div>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+    
+    return (
+        <div className="text-center py-12 text-muted-foreground">
+            <CloudSun className="h-12 w-12 mx-auto mb-4" />
+            <p>Enter a city name to get the weather, or allow location access.</p>
+        </div>
+    );
   };
 
   return (
     <Layout>
-      <div className="container mx-auto p-6 space-y-6">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Weather Dashboard</h1>
-          <p className="text-muted-foreground">
-            Real-time weather data and farming recommendations for {mockWeatherData.location}
-          </p>
-        </div>
-
-        {/* Current Weather */}
-        <Card className="bg-gradient-to-br from-primary/5 via-primary-glow/5 to-accent/5">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CloudSun className="h-6 w-6" />
-              Current Weather
-            </CardTitle>
-            <CardDescription>{mockWeatherData.location}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Main Weather */}
-              <div className="text-center md:text-left">
-                <div className="flex items-center justify-center md:justify-start gap-4 mb-4">
-                  <div className="text-6xl">{current.icon}</div>
-                  <div>
-                    <div className={`text-4xl font-bold ${getTemperatureColor(current.temperature)}`}>
-                      {current.temperature}°C
-                    </div>
-                    <div className="text-lg text-muted-foreground">
-                      {current.condition}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Weather Details */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-2">
-                  <Droplets className="h-5 w-5 text-blue-500" />
-                  <div>
-                    <div className="text-sm text-muted-foreground">Humidity</div>
-                    <div className="font-semibold">{current.humidity}%</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Wind className="h-5 w-5 text-gray-500" />
-                  <div>
-                    <div className="text-sm text-muted-foreground">Wind Speed</div>
-                    <div className="font-semibold">{current.windSpeed} km/h</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Eye className="h-5 w-5 text-purple-500" />
-                  <div>
-                    <div className="text-sm text-muted-foreground">Visibility</div>
-                    <div className="font-semibold">10 km</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Thermometer className="h-5 w-5 text-red-500" />
-                  <div>
-                    <div className="text-sm text-muted-foreground">Feels Like</div>
-                    <div className="font-semibold">{current.temperature + 2}°C</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 7-Day Forecast */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              7-Day Forecast
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {forecast.map((day, index) => {
-                const precipLevel = getPrecipitationLevel(day.precipitation);
-                return (
-                  <div key={index} className="border border-border rounded-lg p-4">
-                    <div className="text-center">
-                      <div className="text-sm font-medium mb-2">
-                        {new Date(day.date).toLocaleDateString('en-US', { 
-                          weekday: 'short', 
-                          month: 'short', 
-                          day: 'numeric' 
-                        })}
-                      </div>
-                      <div className="text-3xl mb-2">{day.icon}</div>
-                      <div className="text-lg font-semibold">{day.condition}</div>
-                      <div className="flex justify-center gap-2 mt-2">
-                        <span className={`font-bold ${getTemperatureColor(day.high)}`}>
-                          {day.high}°
-                        </span>
-                        <span className="text-muted-foreground">/</span>
-                        <span className="text-muted-foreground">{day.low}°</span>
-                      </div>
-                      <div className="mt-3">
-                        <div className="flex items-center justify-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${precipLevel.color}`}></div>
-                          <span className="text-xs text-muted-foreground">
-                            {precipLevel.label} ({day.precipitation}%)
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Farming Tips */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lightbulb className="h-5 w-5 text-yellow-500" />
-                Farming Recommendations
-              </CardTitle>
-              <CardDescription>
-                AI-powered tips based on current weather conditions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {farmingTips.map((tip, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
-                    <p className="text-sm leading-relaxed">{tip}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Weather Alerts */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-orange-500" />
-                Weather Alerts
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-yellow-800">
-                      High Humidity Alert
-                    </p>
-                    <p className="text-xs text-yellow-700 mt-1">
-                      Current humidity levels may increase disease risk. Monitor crops closely.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <TrendingUp className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-blue-800">
-                      Optimal Growing Conditions
-                    </p>
-                    <p className="text-xs text-blue-700 mt-1">
-                      Perfect temperature range for wheat and rice cultivation.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Historical Data */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Monthly Summary</CardTitle>
-            <CardDescription>Weather patterns for farming planning</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-muted rounded-lg">
-                <div className="text-2xl font-bold text-primary">24°C</div>
-                <div className="text-sm text-muted-foreground">Avg Temperature</div>
-              </div>
-              <div className="text-center p-4 bg-muted rounded-lg">
-                <div className="text-2xl font-bold text-blue-500">65%</div>
-                <div className="text-sm text-muted-foreground">Avg Humidity</div>
-              </div>
-              <div className="text-center p-4 bg-muted rounded-lg">
-                <div className="text-2xl font-bold text-green-500">180mm</div>
-                <div className="text-sm text-muted-foreground">Total Rainfall</div>
-              </div>
-              <div className="text-center p-4 bg-muted rounded-lg">
-                <div className="text-2xl font-bold text-orange-500">12 km/h</div>
-                <div className="text-sm text-muted-foreground">Avg Wind Speed</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <div className="mb-6"><h1 className="text-3xl font-bold text-foreground mb-2">Weather Forecast</h1><p className="text-muted-foreground">Get detailed weather information for your farm planning.</p></div>
+        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input placeholder="Search for a city..." value={city} onChange={(e) => setCity(e.target.value)} className="pl-10"/>
+          </div>
+          <Button type="submit" className="w-full sm:w-auto" disabled={mutation.isPending}>
+            {mutation.isPending ? 'Searching...' : 'Search'}
+          </Button>
+        </form>
+        {renderContent()}
       </div>
     </Layout>
   );

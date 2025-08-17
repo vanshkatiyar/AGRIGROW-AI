@@ -1,4 +1,5 @@
-import { Bell, Search, Menu } from 'lucide-react';
+import { Bell, Search, Menu, MessageCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -57,6 +58,13 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
         {/* Right Section */}
         <div className="flex items-center gap-2">
+          {/* Messages */}
+          <Button asChild variant="ghost" size="icon">
+            <Link to="/messages">
+              <MessageCircle className="h-5 w-5" />
+            </Link>
+          </Button>
+
           {/* Notifications */}
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />

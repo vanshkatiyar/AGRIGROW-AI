@@ -1,4 +1,4 @@
-import { Home, Users, ShoppingBag, CloudSun, MessageCircle, HelpCircle, TrendingUp } from 'lucide-react';
+import { Home, Users, ShoppingBag, CloudSun, HelpCircle, TrendingUp } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -8,9 +8,8 @@ const navigation = [
   { name: 'Feed', href: '/feed', icon: Users },
   { name: 'Marketplace', href: '/marketplace', icon: ShoppingBag },
   { name: 'Weather', href: '/weather', icon: CloudSun },
-  { name: 'Messages', href: '/messages', icon: MessageCircle },
   { name: 'Q&A Hub', href: '/qa', icon: HelpCircle },
-  { name: 'Price Alerts', href: '/prices', icon: TrendingUp },
+  { name: 'Market Prices', href: '/market-prices', icon: TrendingUp },
 ];
 
 interface SidebarProps {

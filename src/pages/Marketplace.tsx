@@ -29,7 +29,7 @@ const Marketplace = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto p-4 sm:p-6">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-foreground mb-2">Marketplace</h1>
@@ -40,7 +40,7 @@ const Marketplace = () => {
 
         {/* Search and Filters */}
         <div className="mb-6 space-y-4">
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
@@ -71,7 +71,7 @@ const Marketplace = () => {
         </div>
 
         {/* Products Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredProducts.map((product) => (
             <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
               <div className="relative">
