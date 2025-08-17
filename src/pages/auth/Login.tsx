@@ -16,7 +16,7 @@ interface LoginForm {
 
 const Login = () => {
   const [error, setError] = useState('');
-  const { login, isAuthenticated, isLoading } = useAuth();
+  const { login, isAuthenticated, isLoading, user } = useAuth(); // Get user from auth
   const { toast } = useToast();
   const location = useLocation();
   
@@ -24,21 +24,31 @@ const Login = () => {
 
   const from = location.state?.from?.pathname || '/';
 
+  // --- CHANGE: Handle redirection after successful login ---
   if (isAuthenticated) {
+    // If the user has a role, go to the intended page.
+    // If not, redirect to role selection.
+    if (user && !user.role) {
+      return <Navigate to="/select-role" replace />;
+    }
     return <Navigate to={from} replace />;
   }
 
   const onSubmit = async (data: LoginForm) => {
     setError('');
-    const success = await login(data.email, data.password);
-    
-    if (success) {
+    try {
+      // --- CHANGE: Added try/catch block for error handling ---
+      await login(data.email, data.password);
+      
       toast({
         title: "Welcome back!",
         description: "You have successfully logged in.",
       });
-    } else {
-      setError('Invalid email or password. Try farmer@smartfarm.com / password');
+      // The redirection is now handled by the effect above.
+      
+    } catch (err: any) {
+      // This will now catch errors like "Invalid email or password" from the backend
+      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
     }
   };
 
@@ -95,10 +105,6 @@ const Login = () => {
                   placeholder="Enter your password"
                   {...register('password', { 
                     required: 'Password is required',
-                    minLength: {
-                      value: 6,
-                      message: 'Password must be at least 6 characters'
-                    }
                   })}
                 />
                 {errors.password && (
@@ -121,14 +127,6 @@ const Login = () => {
                 <Link to="/auth/register" className="text-primary hover:underline font-medium">
                   Sign up
                 </Link>
-              </p>
-            </div>
-
-            <div className="mt-4 p-3 bg-muted rounded-lg">
-              <p className="text-xs text-muted-foreground text-center">
-                Demo credentials:<br />
-                Email: farmer@smartfarm.com<br />
-                Password: password
               </p>
             </div>
           </CardContent>

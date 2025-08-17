@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios'; // We'll use axios for API calls
 
-// --- CHANGE: Role can now be null for new users ---
+// --- This interface remains the same ---
 interface User {
   id: string;
   name: string;
@@ -10,15 +11,8 @@ interface User {
   bio: string;
   role: 'farmer' | 'buyer' | 'expert' | null; 
   verified: boolean;
-  roleData: {
-    // Role-specific data remains optional
-    farmer?: { crops: string[]; farmSize: number; experienceYears: number; certifications: string[]; followers: number; following: number; };
-    buyer?: { companyName: string; businessType: string; creditLimit: number; purchaseVolume: string; totalPurchases: number; monthlySpending: number; };
-    expert?: { credentials: string[]; specializations: string[]; experienceYears: number; consultationRate: number; rating: number; totalConsultations: number; };
-  };
+  roleData: { /* ... */ };
 }
-
-// --- CHANGE: RegisterData is now simpler ---
 interface RegisterData {
   name: string;
   email: string;
@@ -28,21 +22,23 @@ interface RegisterData {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (userData: RegisterData) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<void>; // Now returns Promise<void>
+  register: (userData: RegisterData) => Promise<void>; // Now returns Promise<void>
   logout: () => void;
   isLoading: boolean;
   isAuthenticated: boolean;
-  updateUserRole: (role: 'farmer' | 'buyer' | 'expert') => void; // --- CHANGE: New function to set role ---
+  updateUserRole: (role: 'farmer' | 'buyer' | 'expert') => Promise<void>;
 }
+
+// Set a base URL for your backend API. During development, it might be http://localhost:5000
+// This should be in your .env file in a real app, e.g., VITE_API_BASE_URL
+const API_BASE_URL = 'http://localhost:5000/api'; 
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
 
@@ -50,74 +46,79 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // This effect runs on app startup to check if the user is already logged in
   useEffect(() => {
-    const storedUser = localStorage.getItem('smartfarm_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    const checkUserSession = async () => {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        // Set the token for all future axios requests
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        try {
+          // Ask the backend to verify this token and send back user data
+          const response = await axios.get(`${API_BASE_URL}/auth/me`);
+          setUser(response.data.user);
+        } catch (error) {
+          // Token is invalid or expired
+          localStorage.removeItem('authToken');
+          axios.defaults.headers.common['Authorization'] = null;
+        }
+      }
+      setIsLoading(false);
+    };
+    checkUserSession();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // Mock login remains the same...
+  const login = async (email: string, password: string) => {
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    const demoUsers = { 'farmer@smartfarm.com': { id: 'user_001', name: 'Ravi Kumar', email: 'farmer@smartfarm.com', profileImage: '/api/placeholder/100/100', location: 'Punjab, India', bio: 'Wheat and rice farmer with 15 years experience', role: 'farmer' as const, verified: true, roleData: { farmer: { crops: ['wheat', 'rice', 'sugarcane'], farmSize: 10, experienceYears: 15, certifications: ['Organic Certified'], followers: 250, following: 180 } } }, 'buyer@smartfarm.com': { id: 'user_002', name: 'Arjun Traders', email: 'buyer@smartfarm.com', profileImage: '/api/placeholder/100/100', location: 'Delhi, India', bio: 'Agricultural produce wholesale business', role: 'buyer' as const, verified: true, roleData: { buyer: { companyName: 'Arjun Agricultural Traders', businessType: 'wholesale', creditLimit: 500000, purchaseVolume: 'high', totalPurchases: 50, monthlySpending: 85000 } } }, 'expert@smartfarm.com': { id: 'user_003', name: 'Dr. Priya Sharma', email: 'expert@smartfarm.com', profileImage: '/api/placeholder/100/100', location: 'Bangalore, India', bio: 'Agricultural scientist and crop consultant', role: 'expert' as const, verified: true, roleData: { expert: { credentials: ['PhD Agriculture', 'Plant Pathologist'], specializations: ['crop diseases', 'soil management', 'organic farming'], experienceYears: 20, consultationRate: 500, rating: 4.7, totalConsultations: 150 } } } };
-    const userData = demoUsers[email as keyof typeof demoUsers];
-    if (userData && password === 'password') {
-      setUser(userData);
-      localStorage.setItem('smartfarm_user', JSON.stringify(userData));
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, { email, password });
+      const { token, user } = response.data;
+      
+      localStorage.setItem('authToken', token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      setUser(user);
+    } finally {
       setIsLoading(false);
-      return true;
     }
-    setIsLoading(false);
-    return false;
-  };
-  
-  // --- CHANGE: Register function now creates a user with a null role ---
-  const register = async (userData: RegisterData): Promise<boolean> => {
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    const newUser: User = {
-      id: `user_${Date.now()}`,
-      name: userData.name,
-      email: userData.email,
-      profileImage: '/api/placeholder/100/100',
-      location: userData.location,
-      bio: '',
-      role: null, // Role is null initially
-      verified: false,
-      roleData: {},
-    };
-    setUser(newUser);
-    localStorage.setItem('smartfarm_user', JSON.stringify(newUser));
-    setIsLoading(false);
-    return true;
   };
 
-  // --- CHANGE: New function to update the user's role ---
-  const updateUserRole = (role: 'farmer' | 'buyer' | 'expert') => {
-    if (user) {
-      const updatedUser = { ...user, role };
+  const register = async (userData: RegisterData) => {
+    setIsLoading(true);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/register`, userData);
+      const { token, user } = response.data;
+
+      localStorage.setItem('authToken', token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      setUser(user);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateUserRole = async (role: 'farmer' | 'buyer' | 'expert') => {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/user/role`, { role });
+      const updatedUser = response.data.user;
       setUser(updatedUser);
-      localStorage.setItem('smartfarm_user', JSON.stringify(updatedUser));
+      // Also update the user in localStorage if you want to keep it in sync, but the token is more important.
+    } catch (error) {
+      console.error("Failed to update user role", error);
+      // Optionally show a toast notification on failure
     }
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('smartfarm_user');
+    localStorage.removeItem('authToken');
+    delete axios.defaults.headers.common['Authorization'];
   };
 
   const value: AuthContextType = {
     user, login, register, logout, isLoading,
     isAuthenticated: !!user,
-    updateUserRole, // Expose the new function
+    updateUserRole,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

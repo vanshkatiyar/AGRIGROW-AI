@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/context/AuthContext';
 
-// --- CHANGE: Simplified form data ---
 interface RegisterForm {
   name: string;
   email: string;
@@ -25,25 +24,27 @@ const Register = () => {
   const { register, handleSubmit, formState: { errors }, watch } = useForm<RegisterForm>();
   const password = watch('password');
 
-  // If user is already logged in, they shouldn't be here
+  // If user is already logged in, they shouldn't be on this page
   if (isAuthenticated) {
     return <Navigate to="/" replace />;
   }
 
   const onSubmit = async (data: RegisterForm) => {
     setError('');
-    const success = await registerUser({
-      name: data.name,
-      email: data.email,
-      password: data.password,
-      location: data.location,
-    });
-    
-    if (success) {
-      // --- CHANGE: Redirect to role selection instead of showing toast ---
+    try {
+      await registerUser({
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        location: data.location,
+      });
+      // On success, the AuthProvider handles setting the user and token.
+      // We can now redirect to the next step.
       navigate('/select-role'); 
-    } else {
-      setError('Registration failed. Please try again.');
+    } catch (err: any) {
+      // Catch errors from the backend (e.g., "Email already in use")
+      // and display them to the user.
+      setError(err.response?.data?.message || 'Registration failed. Please try again.');
     }
   };
 
@@ -65,36 +66,72 @@ const Register = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
-                  <Input id="name" placeholder="Ravi Kumar" {...register('name', { required: 'Name is required' })} />
+                  <Input 
+                    id="name" 
+                    placeholder="Ravi Kumar" 
+                    {...register('name', { required: 'Name is required' })} 
+                  />
                   {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="location">Location</Label>
-                  <Input id="location" placeholder="Punjab, India" {...register('location', { required: 'Location is required' })} />
+                  <Input 
+                    id="location" 
+                    placeholder="Punjab, India" 
+                    {...register('location', { required: 'Location is required' })} 
+                  />
                   {errors.location && <p className="text-sm text-destructive">{errors.location.message}</p>}
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="your.email@example.com" {...register('email', { required: 'Email is required', pattern: { value: /^\S+@\S+$/i, message: 'Invalid email address' } })} />
+                <Input 
+                  id="email" 
+                  type="email" 
+                  placeholder="your.email@example.com" 
+                  {...register('email', { 
+                    required: 'Email is required', 
+                    pattern: { value: /^\S+@\S+$/i, message: 'Invalid email address' } 
+                  })} 
+                />
                 {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
-                  <Input id="password" type="password" placeholder="Create password" {...register('password', { required: 'Password is required', minLength: { value: 6, message: 'Password must be at least 6 characters' } })} />
+                  <Input 
+                    id="password" 
+                    type="password" 
+                    placeholder="Create password" 
+                    {...register('password', { 
+                      required: 'Password is required', 
+                      minLength: { value: 6, message: 'Password must be at least 6 characters' } 
+                    })} 
+                  />
                   {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <Input id="confirmPassword" type="password" placeholder="Confirm password" {...register('confirmPassword', { required: 'Please confirm your password', validate: value => value === password || 'Passwords do not match' })} />
+                  <Input 
+                    id="confirmPassword" 
+                    type="password" 
+                    placeholder="Confirm password" 
+                    {...register('confirmPassword', { 
+                      required: 'Please confirm your password', 
+                      validate: value => value === password || 'Passwords do not match' 
+                    })} 
+                  />
                   {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>}
                 </div>
               </div>

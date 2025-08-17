@@ -2,29 +2,51 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
 import { Sprout, ShoppingCart, GraduationCap } from 'lucide-react';
+import { useState } from 'react'; // Import useState for loading state
+import { LoadingSpinner } from '@/components/common/LoadingSpinner'; // Import a spinner
 
 const SelectRole = () => {
   const navigate = useNavigate();
   const { updateUserRole, user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false); // Add loading state
 
-  const handleRoleSelect = (role: 'farmer' | 'buyer' | 'expert') => {
-    updateUserRole(role);
+  // --- THIS IS THE KEY FIX ---
+  // The function is now async, and we await the role update.
+  const handleRoleSelect = async (role: 'farmer' | 'buyer' | 'expert') => {
+    setIsLoading(true); // Start loading indicator
+    try {
+      await updateUserRole(role); // Wait for the backend to confirm the update
 
-    // Redirect to the appropriate dashboard
-    switch (role) {
-      case 'farmer':
-        navigate('/farmer-dashboard');
-        break;
-      case 'buyer':
-        navigate('/buyer-dashboard');
-        break;
-      case 'expert':
-        navigate('/expert-dashboard');
-        break;
-      default:
-        navigate('/'); // Fallback to home
+      // Now that the user's role is updated in the context, we can safely redirect.
+      switch (role) {
+        case 'farmer':
+          navigate('/farmer-dashboard');
+          break;
+        case 'buyer':
+          navigate('/buyer-dashboard');
+          break;
+        case 'expert':
+          navigate('/expert-dashboard');
+          break;
+        default:
+          navigate('/');
+      }
+    } catch (error) {
+      console.error("Failed to update role:", error);
+      // Optionally show an error toast here
+      setIsLoading(false); // Stop loading on error
     }
   };
+
+  // If loading, show a spinner instead of the cards
+  if (isLoading) {
+    return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+            <LoadingSpinner size="lg" />
+            <p className="text-muted-foreground mt-4">Saving your role...</p>
+        </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
