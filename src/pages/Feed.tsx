@@ -4,184 +4,193 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Heart, 
-  MessageSquare, 
-  Share2, 
-  MapPin, 
-  Clock,
-  ShoppingCart,
-  MoreHorizontal
-} from 'lucide-react';
-import { mockPosts } from '@/services/mockData';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { CreatePostForm } from '@/components/feed/CreatePostForm';
+import { EditPostForm } from '@/components/feed/EditPostForm';
+import { useAuth } from '@/context/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getPosts, createPost, deletePost, updatePost } from '@/services/postService';
 import { formatDistanceToNow } from 'date-fns';
+import { Heart, MessageSquare, Share2, MapPin, Clock, MoreHorizontal, ShoppingCart, Trash2, Edit } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 
 const Feed = () => {
-  const [posts, setPosts] = useState(mockPosts);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const handleLike = (postId: string) => {
-    setPosts(posts.map(post => 
-      post.id === postId 
-        ? { 
-            ...post, 
-            isLiked: !post.isLiked,
-            likes: post.isLiked ? post.likes - 1 : post.likes + 1
-          }
-        : post
-    ));
+  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<any>(null);
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
+
+  // Fetch posts from the backend
+  const { data: posts, isLoading, isError } = useQuery({ queryKey: ['posts'], queryFn: getPosts });
+
+  // --- MUTATIONS FOR CRUD OPERATIONS ---
+  const onSuccess = (message: string) => {
+    queryClient.invalidateQueries({ queryKey: ['posts'] });
+    toast({ title: message });
   };
+
+  const createPostMutation = useMutation({
+    mutationFn: createPost,
+    onSuccess: () => { onSuccess("Post created successfully!"); setIsCreatePostOpen(false); },
+    onError: (error) => toast({ title: "Error creating post", description: error.message, variant: "destructive" }),
+  });
+
+  const deletePostMutation = useMutation({
+    mutationFn: deletePost,
+    onSuccess: () => { onSuccess("Post deleted successfully!"); setDeletingPostId(null); },
+    onError: (error) => toast({ title: "Error deleting post", description: error.message, variant: "destructive" }),
+  });
+
+  const updatePostMutation = useMutation({
+    mutationFn: updatePost,
+    onSuccess: () => { onSuccess("Post updated successfully!"); setEditingPost(null); },
+    onError: (error) => toast({ title: "Error updating post", description: error.message, variant: "destructive" }),
+  });
+
+  const handleCreatePost = (formData: FormData) => createPostMutation.mutate(formData);
+  const handleDeletePost = () => { if (deletingPostId) deletePostMutation.mutate(deletingPostId); };
+  const handleUpdatePost = (content: string) => { if (editingPost) updatePostMutation.mutate({ postId: editingPost._id, content }); };
+
+  // (Like functionality would also be a mutation in a real app, but is mocked for now)
+  const handleLike = (postId: string) => console.log("Like functionality to be implemented with backend.", postId);
 
   return (
     <Layout>
       <div className="container mx-auto max-w-2xl p-4 space-y-6">
-        {/* Create Post Card */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src="/api/placeholder/40/40" />
-                <AvatarFallback>RK</AvatarFallback>
-              </Avatar>
-              <Button 
-                variant="outline" 
-                className="flex-1 justify-start text-muted-foreground hover:bg-muted"
-              >
-                What's happening in your farm today?
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Create Post Card Trigger */}
+        <Dialog open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
+          <DialogTrigger asChild>
+            <Card className="cursor-pointer hover:bg-muted transition-colors">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={user?.profileImage} />
+                    <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 text-left text-muted-foreground">
+                    What's happening on your farm today?
+                  </div>
+                  <Button>Create Post</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Create a New Post</DialogTitle></DialogHeader>
+            <CreatePostForm 
+                onSubmit={handleCreatePost} 
+                onClose={() => setIsCreatePostOpen(false)} 
+                isPending={createPostMutation.isPending} 
+            />
+          </DialogContent>
+        </Dialog>
 
+        {/* Loading and Error States */}
+        {isLoading && <div className="flex justify-center p-12"><LoadingSpinner size="lg" /></div>}
+        {isError && <div className="text-center text-red-500 p-12">Failed to load posts. Please try again later.</div>}
+        
         {/* Posts Feed */}
-        {posts.map((post) => (
-          <Card key={post.id} className="overflow-hidden">
-            <CardContent className="p-0">
+        {posts && posts.map((post: any) => (
+          <Card key={post._id} className="overflow-hidden">
+            <CardContent className="p-4 space-y-4">
               {/* Post Header */}
-              <div className="p-4 pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={post.userImage} />
-                      <AvatarFallback>{post.userName.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-sm">{post.userName}</h3>
-                        <Badge variant="secondary" className="text-xs">
-                          Farmer
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <MapPin className="h-3 w-3" />
-                        {post.userLocation}
-                        <span>•</span>
-                        <Clock className="h-3 w-3" />
-                        {formatDistanceToNow(new Date(post.timestamp), { addSuffix: true })}
-                      </div>
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={post.author.profileImage} />
+                    <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-sm">{post.author.name}</h3>
+                      <Badge variant="secondary" className="text-xs capitalize">{post.author.role || 'Member'}</Badge>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <MapPin className="h-3 w-3" />
+                      {post.author.location}
+                      <span>•</span>
+                      <Clock className="h-3 w-3" />
+                      {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
                 </div>
-
-                {/* Post Content */}
-                <div className="mt-3">
-                  <p className="text-sm leading-relaxed">{post.content}</p>
-                  
-                  {/* For Sale Badge */}
-                  {post.forSale && (
-                    <div className="mt-3 p-3 bg-success/10 border border-success/20 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <ShoppingCart className="h-4 w-4 text-success" />
-                        <span className="text-sm font-medium text-success">Available for Sale</span>
-                      </div>
-                      <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>₹{post.price}/kg</span>
-                        <span>{post.quantity}</span>
-                        <span className="capitalize">{post.cropType}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                {/* --- NEW: Dropdown Menu for Edit/Delete --- */}
+                {user && post.author._id === user.id && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setEditingPost(post)}>
+                        <Edit className="mr-2 h-4 w-4"/>Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setDeletingPostId(post._id)} className="text-red-500 focus:text-red-500">
+                        <Trash2 className="mr-2 h-4 w-4"/>Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
+              
+              {/* Post Content */}
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">{post.content}</p>
 
-              {/* Post Images */}
-              {post.images.length > 0 && (
-                <div className="px-4 pb-3">
-                  {post.images.length === 1 ? (
-                    <img 
-                      src={post.images[0]} 
-                      alt="Post content" 
-                      className="w-full h-64 object-cover rounded-lg"
-                    />
-                  ) : (
-                    <div className="grid grid-cols-2 gap-2">
-                      {post.images.slice(0, 4).map((image, index) => (
-                        <div key={index} className="relative">
-                          <img 
-                            src={image} 
-                            alt={`Post content ${index + 1}`} 
-                            className="w-full h-32 object-cover rounded-lg"
-                          />
-                          {index === 3 && post.images.length > 4 && (
-                            <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
-                              <span className="text-white font-medium">
-                                +{post.images.length - 4} more
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+              {/* Post Image */}
+              {post.imageUrl && (
+                <div className="rounded-lg overflow-hidden border">
+                  <img src={post.imageUrl} alt="Post content" className="w-full h-auto max-h-[500px] object-cover" />
                 </div>
               )}
 
               {/* Post Actions */}
-              <div className="px-4 py-3 border-t border-border">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-6">
-                    <button 
-                      onClick={() => handleLike(post.id)}
-                      className={`flex items-center gap-2 text-sm transition-colors ${
-                        post.isLiked 
-                          ? 'text-red-500 hover:text-red-600' 
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      <Heart className={`h-4 w-4 ${post.isLiked ? 'fill-current' : ''}`} />
-                      {post.likes}
-                    </button>
-                    
-                    <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      <MessageSquare className="h-4 w-4" />
-                      {post.comments}
-                    </button>
-                    
-                    <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      <Share2 className="h-4 w-4" />
-                      Share
-                    </button>
-                  </div>
-
-                  {post.forSale && (
-                    <Button size="sm" variant="outline">
-                      Contact Seller
-                    </Button>
-                  )}
-                </div>
+              <div className="flex items-center justify-between text-muted-foreground pt-4 border-t">
+                <button onClick={() => handleLike(post._id)} className="flex items-center gap-2 text-sm hover:text-foreground transition-colors">
+                  <Heart className="h-4 w-4" /> {post.likes.length} Likes
+                </button>
+                <button className="flex items-center gap-2 text-sm hover:text-foreground transition-colors">
+                  <MessageSquare className="h-4 w-4" /> {post.comments.length} Comments
+                </button>
+                <button className="flex items-center gap-2 text-sm hover:text-foreground transition-colors">
+                  <Share2 className="h-4 w-4" /> Share
+                </button>
               </div>
             </CardContent>
           </Card>
         ))}
 
-        {/* Load More */}
-        <div className="text-center py-6">
-          <Button variant="outline">
-            Load More Posts
-          </Button>
-        </div>
+        {/* Edit Post Dialog */}
+        <Dialog open={!!editingPost} onOpenChange={() => setEditingPost(null)}>
+            <DialogContent>
+                <DialogHeader><DialogTitle>Edit Your Post</DialogTitle></DialogHeader>
+                <EditPostForm
+                    initialContent={editingPost?.content || ''}
+                    onSubmit={handleUpdatePost}
+                    onClose={() => setEditingPost(null)}
+                    isPending={updatePostMutation.isPending}
+                />
+            </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!deletingPostId} onOpenChange={() => setDeletingPostId(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone. This will permanently delete your post from our servers.</AlertDialogDescription></AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeletePost} disabled={deletePostMutation.isPending} className="bg-destructive hover:bg-destructive/90">
+                        {deletePostMutation.isPending ? "Deleting..." : "Delete"}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Layout>
   );

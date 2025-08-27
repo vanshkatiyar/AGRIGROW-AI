@@ -1,19 +1,10 @@
 import axios from 'axios';
+import { mockMarketData, MarketDataRecord as MockRecord } from './mockMarketData';
 
-const API_KEY = import.meta.env.VITE_GOV_DATA_API_KEY;
-const BASE_URL = 'https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070';
+// Re-export the type for use in components
+export type MarketDataRecord = MockRecord;
 
-export interface MarketDataRecord {
-  state: string;
-  district: string;
-  market: string;
-  commodity: string;
-  variety: string;
-  arrival_date: string;
-  min_price: string;
-  max_price: string;
-  modal_price: string;
-}
+const API_BASE_URL = 'http://localhost:5000/api';
 
 export interface MarketDataResponse {
   records: MarketDataRecord[];
@@ -21,34 +12,43 @@ export interface MarketDataResponse {
 }
 
 export const getMarketPrices = async (state: string, commodity: string): Promise<MarketDataResponse> => {
-  if (!API_KEY) {
-    throw new Error("Government Data API key is missing. Please add VITE_GOV_DATA_API_KEY to your .env file.");
-  }
-
   try {
-    const response = await axios.get(BASE_URL, {
-      params: {
-        'api-key': API_KEY,
-        'format': 'json',
-        'offset': '0',
-        'limit': '100', // Get up to 100 records
-        'filters[state]': state,
-        'filters[commodity]': commodity,
-      },
-    });
+    const token = localStorage.getItem('authToken');
+    if (!token) throw new Error("User not authenticated.");
+    
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { state, commodity }
+    };
 
-    const data = response.data;
+    // 1. Fetch live data from our backend
+    const response = await axios.get(`${API_BASE_URL}/market/prices`, config);
+    const liveRecords: MarketDataRecord[] = (response.data.records || []).map((r: any) => ({ ...r, source: 'live' }));
+
+    // 2. Filter our mock data for relevant records
+    const referenceRecords = mockMarketData.filter(
+      record => record.state === state && record.commodity === commodity
+    );
+
+    // 3. Combine them: Live data takes priority. Avoid showing the same market twice.
+    const liveMarkets = new Set(liveRecords.map(r => r.market.toLowerCase()));
+    
+    const uniqueReferenceRecords = referenceRecords
+      .filter(r => !liveMarkets.has(r.market.toLowerCase()))
+      .map(r => ({ ...r, source: 'reference' }));
+
+    // 4. Create the final combined list
+    const finalRecords = [...liveRecords, ...uniqueReferenceRecords];
     
     return {
-      records: data.records,
-      count: data.count,
+      records: finalRecords,
+      count: finalRecords.length,
     };
 
   } catch (error) {
-    console.error("Failed to fetch market data:", error);
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      throw new Error("Invalid API key for data.gov.in. Please check your key.");
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || "An error occurred while fetching market prices.");
     }
-    throw new Error("Could not retrieve market price information at this time.");
+    throw new Error("An unknown error occurred.");
   }
 };
