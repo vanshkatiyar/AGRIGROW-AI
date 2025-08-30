@@ -18,6 +18,7 @@ const postRoutes = require('./routes/postRoutes'); // --- CHANGE #1: Import the 
 const Message = require('./models/Message');
 const Conversation = require('./models/Conversation');
 const expenseRoutes = require('./routes/expenseRoutes');
+const productRoutes = require('./routes/productRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -42,6 +43,7 @@ app.use('/api/weather', weatherRoutes);
 app.use('/api/market', marketRoutes);
 app.use('/api/posts', postRoutes); // --- CHANGE #2: Use the new post routes ---
 app.use('/api/expenses', expenseRoutes);
+app.use('/api/products', productRoutes);
 
 // Socket.IO Logic
 io.on('connection', (socket) => {
