@@ -25,7 +25,10 @@ import SettingsPage from "./pages/SettingsPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import MessagesPage from "./pages/MessagesPage";
 import AIAssistantPage from "./pages/AIAssistantPage";
-import ExpenseTrackerPage from "./pages/ExpenseTrackerPage";
+import CropDoctorPage from "./pages/CropDoctorPage";
+import FarmerExpenseTracker from "./pages/farmer/FarmerExpenseTracker";
+import BuyerExpenseTracker from "./pages/buyer/BuyerExpenseTracker";
+import ExpertExpenseTracker from "./pages/expert/ExpertExpenseTracker";
 
 const queryClient = new QueryClient();
 
@@ -53,17 +56,19 @@ const App = () => (
               <Route path="/weather" element={<ProtectedRoute><Weather /></ProtectedRoute>} />
               <Route path="/market-prices" element={<ProtectedRoute><MarketPrices /></ProtectedRoute>} />
               <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistantPage /></ProtectedRoute>} />
-              <Route path="/expense-tracker" element={<ProtectedRoute><ExpenseTrackerPage /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+              <Route path="/crop-doctor" element={<ProtectedRoute><CropDoctorPage /></ProtectedRoute>} />
+              <Route path="/farmer-expenses" element={<ProtectedRoute><FarmerExpenseTracker /></ProtectedRoute>} />
+              <Route path="/buyer-expenses" element={<ProtectedRoute><BuyerExpenseTracker /></ProtectedRoute>} />
+              <Route path="/expert-expenses" element={<ProtectedRoute><ExpertExpenseTracker /></ProtectedRoute>} />
+              
+              {/* --- THIS ROUTE IS NOW DYNAMIC --- */}
+              <Route path="/profile/:userId" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+              
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
               <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
               
-              {/* Deprecated routes */}
-              <Route path="/qa" element={<NotFound />} />
-              <Route path="/prices" element={<NotFound />} />
-              
-              {/* Catch-all */}
+              {/* Catch-all for any other route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

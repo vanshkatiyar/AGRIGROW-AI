@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
+// Interfaces remain the same
 interface User {
   id: string; name: string; email: string; profileImage: string; location: string; bio: string;
   role: 'farmer' | 'buyer' | 'expert' | null; verified: boolean;
@@ -32,18 +33,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // This effect now correctly handles re-authentication from localStorage
   useEffect(() => {
     const checkUserSession = async () => {
+      const storedUser = localStorage.getItem('smartfarm_user');
       const token = localStorage.getItem('authToken');
-      if (token) {
+
+      if (storedUser && token) {
+        // --- THIS IS THE FIRST PART OF THE FIX ---
+        // We must re-apply the auth token to axios headers on every app load.
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        try {
-          const response = await axios.get(`${API_BASE_URL}/auth/me`);
-          setUser(response.data.user);
-        } catch (error) {
-          localStorage.removeItem('authToken');
-          delete axios.defaults.headers.common['Authorization'];
-        }
+        setUser(JSON.parse(storedUser));
       }
       setIsLoading(false);
     };
@@ -54,10 +54,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/login`, { email, password });
-      const { token, user } = response.data;
-      localStorage.setItem('authToken', token);
+      const { token, user: loggedInUser } = response.data;
+      
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setUser(user);
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('smartfarm_user', JSON.stringify(loggedInUser));
+      setUser(loggedInUser);
     } finally {
       setIsLoading(false);
     }
@@ -67,10 +69,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/register`, userData);
-      const { token, user } = response.data;
-      localStorage.setItem('authToken', token);
+      const { token, user: registeredUser } = response.data;
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setUser(user);
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('smartfarm_user', JSON.stringify(registeredUser));
+      setUser(registeredUser);
     } finally {
       setIsLoading(false);
     }
@@ -78,8 +81,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateUserRole = async (role: 'farmer' | 'buyer' | 'expert') => {
     try {
-      const response = await axios.put(`${API_BASE_URL}/user/role`, { role });
-      setUser(response.data.user);
+      // --- THIS IS THE SECOND PART OF THE FIX ---
+      // Although the useEffect now handles it, making the API call self-sufficient
+      // by explicitly setting its own headers is a more robust pattern.
+      const token = localStorage.getItem('authToken');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      
+      const response = await axios.put(`${API_BASE_URL}/user/role`, { role }, config);
+      const updatedUser = response.data.user;
+      
+      setUser(updatedUser);
+      localStorage.setItem('smartfarm_user', JSON.stringify(updatedUser));
+      
     } catch (error) {
       console.error("Failed to update user role", error);
       throw error;
@@ -88,6 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('smartfarm_user');
     localStorage.removeItem('authToken');
     delete axios.defaults.headers.common['Authorization'];
   };

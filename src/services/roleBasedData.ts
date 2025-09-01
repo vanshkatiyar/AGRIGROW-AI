@@ -1,317 +1,85 @@
-// Role-based dashboard data structures and mock data
-
-export interface FarmerStats {
-  totalCrops: number;
-  activeCrops: number;
-  readyToHarvest: number;
-  totalRevenue: number;
-  monthlyRevenue: number;
-  pendingPayments: number;
-  creditScore: number;
-}
-
 export interface CropStatus {
-  id: string;
-  name: string;
-  plantedDate: string;
-  expectedHarvest: string;
-  currentStage: string;
-  progress: number;
-  areaInAcres: number;
-  expectedYield: string;
-  estimatedRevenue: number;
-  healthStatus: 'excellent' | 'good' | 'fair' | 'poor';
-  nextAction: string;
-  daysToHarvest: number;
+    id: string;
+    name: string;
+    areaInAcres: number;
+    plantingDate: string;
+    daysToHarvest: number;
+    currentStage: 'sowing' | 'vegetative' | 'flowering' | 'harvesting';
+    healthStatus: 'excellent' | 'good' | 'poor';
+    progress: number;
+    expectedYield: string;
+    estimatedRevenue: number;
+    nextAction: string;
 }
 
-export interface Sale {
-  id: string;
-  crop: string;
-  quantity: string;
-  price: number;
-  buyer: string;
-  date: string;
-  status: 'completed' | 'pending' | 'cancelled';
-  amount: number;
-}
-
-export interface BuyerStats {
-  totalPurchases: number;
-  monthlySpending: number;
-  activeFarmers: number;
-  savedAmount: number;
-  creditLimit: number;
-  usedCredit: number;
-  paymentDue: number;
-}
-
-export interface Purchase {
-  id: string;
-  farmer: string;
-  crop: string;
-  quantity: string;
-  pricePerKg: number;
-  totalAmount: number;
-  orderDate: string;
-  deliveryDate: string;
-  status: 'delivered' | 'shipped' | 'pending' | 'cancelled';
-  quality: string;
-  rating: number;
-}
-
-export interface ExpertStats {
-  totalConsultations: number;
-  activeClients: number;
-  monthlyEarnings: number;
-  averageRating: number;
-  responseTime: string;
-  successRate: number;
-  specializations: string[];
-}
-
-export interface ConsultationRequest {
-  id: string;
-  farmerId: string;
-  farmerName: string;
-  issue: string;
-  urgency: 'low' | 'medium' | 'high' | 'critical';
-  submittedDate: string;
-  cropType: string;
-  location: string;
-  images: string[];
-  consultationFee: number;
-  status: 'pending' | 'in-progress' | 'completed' | 'cancelled';
-}
-
-export interface Article {
-  id: string;
-  title: string;
-  views: number;
-  likes: number;
-  publishedDate: string;
-  category: string;
-  content?: string;
-}
-
-// Mock data for farmer dashboard
-export const mockFarmerStats: FarmerStats = {
-  totalCrops: 15,
-  activeCrops: 8,
-  readyToHarvest: 3,
-  totalRevenue: 125000,
-  monthlyRevenue: 25000,
-  pendingPayments: 15000,
-  creditScore: 750
+// --- FARMER DATA ---
+export const mockFarmerStats = {
+    totalCrops: 5,
+    activeCrops: 3,
+    monthlyRevenue: 56200,
+    creditScore: 720,
 };
 
 export const mockCropStatus: CropStatus[] = [
-  {
-    id: "crop1",
-    name: "Wheat",
-    plantedDate: "2025-01-15",
-    expectedHarvest: "2025-04-15",
-    currentStage: "flowering",
-    progress: 65,
-    areaInAcres: 5,
-    expectedYield: "2500kg",
-    estimatedRevenue: 62500,
-    healthStatus: "good",
-    nextAction: "Apply fertilizer",
-    daysToHarvest: 45
-  },
-  {
-    id: "crop2",
-    name: "Rice",
-    plantedDate: "2025-02-01",
-    expectedHarvest: "2025-05-01",
-    currentStage: "grain filling",
-    progress: 80,
-    areaInAcres: 3,
-    expectedYield: "1800kg",
-    estimatedRevenue: 54000,
-    healthStatus: "excellent",
-    nextAction: "Monitor moisture",
-    daysToHarvest: 20
-  },
-  {
-    id: "crop3",
-    name: "Sugarcane",
-    plantedDate: "2024-10-15",
-    expectedHarvest: "2025-03-15",
-    currentStage: "maturation",
-    progress: 95,
-    areaInAcres: 2,
-    expectedYield: "5000kg",
-    estimatedRevenue: 125000,
-    healthStatus: "good",
-    nextAction: "Prepare for harvest",
-    daysToHarvest: 5
-  }
+    { id: 'crop_1', name: 'Wheat', areaInAcres: 10, plantingDate: '2025-05-15T00:00:00Z', daysToHarvest: 30, currentStage: 'flowering', healthStatus: 'excellent', progress: 75, expectedYield: '50 quintals/acre', estimatedRevenue: 250000, nextAction: 'Pest control check' },
+    { id: 'crop_2', name: 'Tomato', areaInAcres: 5, plantingDate: '2025-07-01T00:00:00Z', daysToHarvest: 45, currentStage: 'vegetative', healthStatus: 'good', progress: 40, expectedYield: '10 tonnes/acre', estimatedRevenue: 300000, nextAction: 'Apply fertilizer' },
 ];
 
-export const mockRecentSales: Sale[] = [
-  {
-    id: "sale1",
-    crop: "Rice",
-    quantity: "500kg",
-    price: 30,
-    buyer: "ABC Traders",
-    date: "2025-08-10",
-    status: "completed",
-    amount: 15000
-  },
-  {
-    id: "sale2",
-    crop: "Tomatoes",
-    quantity: "200kg",
-    price: 40,
-    buyer: "Fresh Mart",
-    date: "2025-08-12",
-    status: "pending",
-    amount: 8000
-  }
+export const mockRecentSales = [
+    { id: 'sale1', crop: 'Wheat', quantity: '10 quintals', buyer: 'Arjun Traders', amount: 22500, status: 'completed' },
+    { id: 'sale2', crop: 'Tomato', quantity: '50 kg', buyer: 'Local Market', amount: 1750, status: 'completed' },
 ];
 
-// Mock data for buyer dashboard
-export const mockBuyerStats: BuyerStats = {
-  totalPurchases: 50,
-  monthlySpending: 85000,
-  activeFarmers: 12,
-  savedAmount: 15000,
-  creditLimit: 200000,
-  usedCredit: 45000,
-  paymentDue: 25000
+
+// --- BUYER DATA ---
+export const mockBuyerStats = {
+    totalPurchases: 25,
+    activeFarmers: 12,
+    monthlySpending: 125000,
+    creditLimit: 500000,
+    usedCredit: 150000,
+    paymentDue: 25000,
 };
 
-export const mockPurchaseHistory: Purchase[] = [
-  {
-    id: "purchase1",
-    farmer: "Ravi Kumar",
-    crop: "Organic Tomatoes",
-    quantity: "200kg",
-    pricePerKg: 40,
-    totalAmount: 8000,
-    orderDate: "2025-08-12",
-    deliveryDate: "2025-08-15",
-    status: "delivered",
-    quality: "A+",
-    rating: 5
-  },
-  {
-    id: "purchase2",
-    farmer: "Priya Sharma",
-    crop: "Fresh Wheat",
-    quantity: "1000kg",
-    pricePerKg: 25,
-    totalAmount: 25000,
-    orderDate: "2025-08-10",
-    deliveryDate: "2025-08-13",
-    status: "delivered",
-    quality: "A",
-    rating: 4
-  }
+export const mockPurchaseHistory = [
+    { id: 'buy1', crop: 'Wheat', farmer: 'Ravi Kumar', quantity: '20 quintals', pricePerKg: 22.5, totalAmount: 45000, orderDate: '2025-08-15T00:00:00Z', status: 'delivered', quality: 'A Grade', rating: 5 },
+    { id: 'buy2', crop: 'Cotton', farmer: 'Suresh Patel', quantity: '15 quintals', pricePerKg: 65, totalAmount: 97500, orderDate: '2025-08-20T00:00:00Z', status: 'shipped', quality: 'B Grade', rating: 4 },
 ];
 
-// Mock data for expert dashboard
-export const mockExpertStats: ExpertStats = {
-  totalConsultations: 150,
-  activeClients: 25,
-  monthlyEarnings: 45000,
-  averageRating: 4.7,
-  responseTime: "2 hours",
-  successRate: 92,
-  specializations: ["crop diseases", "soil management", "organic farming"]
+
+// --- EXPERT DATA ---
+export const mockExpertStats = {
+    totalConsultations: 152,
+    activeClients: 18,
+    monthlyEarnings: 35000,
+    averageRating: 4.8,
+    successRate: 92,
+    responseTime: '12 hours',
 };
 
-export const mockConsultationRequests: ConsultationRequest[] = [
-  {
-    id: "consult1",
-    farmerId: "farmer1",
-    farmerName: "Suresh Patel",
-    issue: "Wheat crop yellowing and stunted growth",
-    urgency: "high",
-    submittedDate: "2025-08-15",
-    cropType: "wheat",
-    location: "Gujarat",
-    images: ["/api/placeholder/300/200"],
-    consultationFee: 500,
-    status: "pending"
-  },
-  {
-    id: "consult2",
-    farmerId: "farmer2",
-    farmerName: "Anjali Verma",
-    issue: "Soil pH imbalance affecting crop yield",
-    urgency: "medium",
-    submittedDate: "2025-08-14",
-    cropType: "tomatoes",
-    location: "Maharashtra",
-    images: ["/api/placeholder/300/200", "/api/placeholder/300/200"],
-    consultationFee: 600,
-    status: "in-progress"
-  }
+export const mockConsultationRequests = [
+    { id: 'con1', farmerName: 'Ravi Kumar', location: 'Punjab', cropType: 'Wheat', issue: 'Yellow rust spotted on leaves.', submittedDate: '2025-08-22T00:00:00Z', urgency: 'high', status: 'pending', images: [1,2], consultationFee: 500 },
+    { id: 'con2', farmerName: 'Anjali Desai', location: 'Maharashtra', cropType: 'Sugarcane', issue: 'Stunted growth in section B.', submittedDate: '2025-08-21T00:00:00Z', urgency: 'medium', status: 'in-progress', images: [], consultationFee: 500 },
 ];
 
-export const mockArticles: Article[] = [
-  {
-    id: "article1",
-    title: "Managing Wheat Rust Disease: A Comprehensive Guide",
-    views: 1250,
-    likes: 89,
-    publishedDate: "2025-08-01",
-    category: "disease_management"
-  },
-  {
-    id: "article2",
-    title: "Optimizing Soil Health for Better Crop Yields",
-    views: 892,
-    likes: 76,
-    publishedDate: "2025-07-28",
-    category: "soil_management"
-  }
+export const mockArticles = [
+    { id: 'art1', title: 'Managing Soil pH for Optimal Crop Yield', publishedDate: '2025-08-10T00:00:00Z', views: 1200, likes: 250 },
+    { id: 'art2', title: 'Top 5 Organic Pesticides You Can Make at Home', publishedDate: '2025-07-25T00:00:00Z', views: 3500, likes: 800 },
 ];
 
-// Dashboard analytics data
+
+// --- SHARED FINANCIAL DATA ---
 export const mockFinancialData = {
-  farmer: {
-    monthlyRevenue: [
-      { month: "Jan", revenue: 45000 },
-      { month: "Feb", revenue: 52000 },
-      { month: "Mar", revenue: 38000 },
-      { month: "Apr", revenue: 65000 },
-      { month: "May", revenue: 48000 },
-      { month: "Jun", revenue: 55000 }
-    ],
-    expenseBreakdown: [
-      { category: "Seeds", amount: 15000 },
-      { category: "Fertilizers", amount: 12000 },
-      { category: "Labor", amount: 20000 },
-      { category: "Equipment", amount: 8000 }
-    ]
-  },
-  buyer: {
-    monthlySpending: [
-      { month: "Jun", amount: 75000 },
-      { month: "Jul", amount: 80000 },
-      { month: "Aug", amount: 85000 }
-    ],
-    categoryBreakdown: [
-      { category: "Grains", amount: 45000 },
-      { category: "Vegetables", amount: 25000 },
-      { category: "Fruits", amount: 15000 }
-    ]
-  },
-  expert: {
-    monthlyEarnings: [
-      { month: "Jun", earnings: 38000 },
-      { month: "Jul", earnings: 42000 },
-      { month: "Aug", earnings: 45000 }
-    ],
-    serviceBreakdown: [
-      { type: "consultations", amount: 35000 },
-      { type: "articles", amount: 5000 },
-      { type: "premium_advice", amount: 5000 }
-    ]
-  }
+    farmer: {
+        monthlyRevenue: [ { month: 'Jan', revenue: 30000 }, { month: 'Feb', revenue: 45000 }, { month: 'Mar', revenue: 42000 }, { month: 'Apr', revenue: 60000 }, { month: 'May', revenue: 55000 }, { month: 'Jun', revenue: 75000 }, ],
+        expenseBreakdown: [ { category: 'Seeds', amount: 12000 }, { category: 'Fertilizer', amount: 18000 }, { category: 'Labor', amount: 25000 }, { category: 'Other', amount: 7000 }, ],
+    },
+    buyer: {
+        monthlySpending: [ { month: 'Jan', amount: 80000 }, { month: 'Feb', amount: 95000 }, { month: 'Mar', amount: 110000 }, { month: 'Apr', amount: 85000 }, { month: 'May', amount: 120000 }, { month: 'Jun', amount: 150000 }, ],
+        categoryBreakdown: [ { category: 'Grains', amount: 250000 }, { category: 'Vegetables', amount: 150000 }, { category: 'Fruits', amount: 80000 }, { category: 'Other', amount: 50000 }, ],
+    },
+    expert: {
+        monthlyEarnings: [ { month: 'Jan', earnings: 25000 }, { month: 'Feb', earnings: 30000 }, { month: 'Mar', earnings: 28000 }, { month: 'Apr', earnings: 35000 }, { month: 'May', earnings: 32000 }, { month: 'Jun', earnings: 40000 }, ],
+        serviceBreakdown: [ { type: 'consultations', amount: 150000 }, { type: 'articles', amount: 30000 }, { type: 'other', amount: 10000 }, ],
+    }
 };

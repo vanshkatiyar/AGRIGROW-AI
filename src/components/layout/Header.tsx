@@ -59,13 +59,13 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 <div className="flex flex-col space-y-1"><p className="text-sm font-medium leading-none">{user?.name}</p><p className="text-xs leading-none text-muted-foreground">{user?.email}</p></div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild><Link to="/profile">Profile</Link></DropdownMenuItem>
+              {/* --- THIS IS THE CHANGE --- */}
+              <DropdownMenuItem asChild>
+                <Link to={`/profile/${user?.id}`}>Profile</Link>
+              </DropdownMenuItem>
               <DropdownMenuItem asChild><Link to="/settings">Settings</Link></DropdownMenuItem>
               <DropdownMenuSeparator />
-              {/* --- CHANGE: Logout button is now enabled --- */}
-              <DropdownMenuItem onClick={logout}>
-                Log out
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={logout}>Log out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
