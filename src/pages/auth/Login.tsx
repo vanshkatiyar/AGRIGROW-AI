@@ -45,8 +45,16 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/20 to-primary/5 p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary-glow rounded-xl flex items-center justify-center mx-auto mb-4"><span className="text-white text-2xl">🌾</span></div>
-          <h1 className="text-3xl font-bold text-primary">SmartFarm Hub</h1>
+          
+          {/* --- THIS BLOCK IS REPLACED --- */}
+          <img 
+            src="/AgriGro-Logo.png" 
+            alt="AgriGrow Logo" 
+            className="w-16 h-16 mx-auto mb-4" 
+          />
+          {/* --- END OF REPLACEMENT --- */}
+
+          <h1 className="text-3xl font-bold text-primary">AgriGrow</h1>
           <p className="text-muted-foreground mt-2">Connect with the farming community</p>
         </div>
         <Card className="shadow-lg">

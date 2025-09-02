@@ -26,10 +26,18 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}><Menu className="h-5 w-5" /></Button>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-glow rounded-lg flex items-center justify-center"><span className="text-white font-bold text-sm">🌾</span></div>
-            <h1 className="text-xl font-bold text-primary hidden sm:block">SmartFarm Hub</h1>
-          </div>
+
+          {/* --- THIS BLOCK IS REPLACED --- */}
+          <Link to="/" className="flex items-center gap-2">
+            <img 
+              src="/AgriGro-Logo.png" 
+              alt="AgriGrow Logo" 
+              className="h-8 w-auto" // Controls the height, width adjusts automatically
+            />
+            <h1 className="text-xl font-bold text-primary hidden sm:block">AgriGrow</h1>
+          </Link>
+          {/* --- END OF REPLACEMENT --- */}
+
         </div>
 
         <div className="flex-1 max-w-md mx-4 hidden md:block">
@@ -59,7 +67,6 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 <div className="flex flex-col space-y-1"><p className="text-sm font-medium leading-none">{user?.name}</p><p className="text-xs leading-none text-muted-foreground">{user?.email}</p></div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {/* --- THIS IS THE CHANGE --- */}
               <DropdownMenuItem asChild>
                 <Link to={`/profile/${user?.id}`}>Profile</Link>
               </DropdownMenuItem>

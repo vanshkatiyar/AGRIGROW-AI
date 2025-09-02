@@ -1,11 +1,14 @@
-// backend/tsconfig.json
 {
   "compilerOptions": {
-    "target": "ES6",
-    "module": "commonjs",
-    "rootDir": "./src",
-    "outDir": "./dist",
-    "esModuleInterop": true,
-    "strict": true
-  }
+    // ... other options
+    "jsx": "react-jsx",
+    
+    /* --- THIS PART MUST EXIST --- */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src"],
+  "references": [{ "AGRIGROW-AI": "./tsconfig.node.json" }]
 }

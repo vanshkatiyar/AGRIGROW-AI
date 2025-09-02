@@ -1,116 +1,81 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+// --- THIS IS THE CORRECTED IMPORT LINE ---
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import axios from 'axios';
+import { User } from '@/types'; // Assuming you have a types file for your User object
 
-// Interfaces remain the same
-interface User {
-  id: string; name: string; email: string; profileImage: string; location: string; bio: string;
-  role: 'farmer' | 'buyer' | 'expert' | null; verified: boolean;
-  roleData: { farmer?: any; buyer?: any; expert?: any; };
-}
-interface RegisterData { name: string; email: string; password: string; location: string; }
-
+// Define the shape of the context value
 interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (userData: RegisterData) => Promise<void>;
-  logout: () => void;
-  isLoading: boolean;
   isAuthenticated: boolean;
-  updateUserRole: (role: 'farmer' | 'buyer' | 'expert') => Promise<void>;
+  user: User | null;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
 
-const API_BASE_URL = 'http://localhost:5000/api'; 
+// Create the context
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const AuthContext = createContext<AuthContextType | null>(null);
-
+// Custom hook to use the auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
   return context;
 };
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// The provider component
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // This effect now correctly handles re-authentication from localStorage
   useEffect(() => {
-    const checkUserSession = async () => {
-      const storedUser = localStorage.getItem('smartfarm_user');
-      const token = localStorage.getItem('authToken');
-
-      if (storedUser && token) {
-        // --- THIS IS THE FIRST PART OF THE FIX ---
-        // We must re-apply the auth token to axios headers on every app load.
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        setUser(JSON.parse(storedUser));
+    const validateToken = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const response = await axios.get('http://localhost:5000/api/user/profile', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setUser(response.data);
+        } catch (error) {
+          console.error('Token validation failed', error);
+          localStorage.removeItem('token');
+          setUser(null);
+        }
       }
       setIsLoading(false);
     };
-    checkUserSession();
+    validateToken();
   }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
-    try {
-      const response = await axios.post(`${API_BASE_URL}/auth/login`, { email, password });
-      const { token, user: loggedInUser } = response.data;
-      
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('smartfarm_user', JSON.stringify(loggedInUser));
-      setUser(loggedInUser);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const register = async (userData: RegisterData) => {
-    setIsLoading(true);
-    try {
-      const response = await axios.post(`${API_BASE_URL}/auth/register`, userData);
-      const { token, user: registeredUser } = response.data;
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('smartfarm_user', JSON.stringify(registeredUser));
-      setUser(registeredUser);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const updateUserRole = async (role: 'farmer' | 'buyer' | 'expert') => {
-    try {
-      // --- THIS IS THE SECOND PART OF THE FIX ---
-      // Although the useEffect now handles it, making the API call self-sufficient
-      // by explicitly setting its own headers is a more robust pattern.
-      const token = localStorage.getItem('authToken');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      
-      const response = await axios.put(`${API_BASE_URL}/user/role`, { role }, config);
-      const updatedUser = response.data.user;
-      
-      setUser(updatedUser);
-      localStorage.setItem('smartfarm_user', JSON.stringify(updatedUser));
-      
-    } catch (error) {
-      console.error("Failed to update user role", error);
-      throw error;
-    }
+    const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+    const { token, user: userData } = response.data;
+    localStorage.setItem('token', token);
+    setUser(userData);
+    setIsLoading(false);
   };
 
   const logout = () => {
+    localStorage.removeItem('token');
     setUser(null);
-    localStorage.removeItem('smartfarm_user');
-    localStorage.removeItem('authToken');
-    delete axios.defaults.headers.common['Authorization'];
   };
 
-  const value: AuthContextType = {
-    user, login, register, logout, isLoading,
+  const value = {
     isAuthenticated: !!user,
-    updateUserRole,
+    user,
+    isLoading,
+    login,
+    logout,
+    setUser,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{!isLoading && children}</AuthContext.Provider>;
 };

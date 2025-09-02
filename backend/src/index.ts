@@ -19,7 +19,7 @@ mongoose.connect(process.env.MONGO_URI!)
 
 // Simple test route
 app.get('/api', (req, res) => {
-  res.send('SmartFarm Hub Backend is running!');
+  res.send('AgriGrow Backend is running!');
 });
 
 app.listen(PORT, () => {

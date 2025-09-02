@@ -1,51 +1,48 @@
-// src/context/SocketContext.tsx
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useAuth } from './AuthContext';
+import { useAuth } from './AuthContext'; // Assuming you have AuthContext to get user info
 
 interface SocketContextType {
   socket: Socket | null;
 }
 
-const SocketContext = createContext<SocketContextType | null>(null);
+const SocketContext = createContext<SocketContextType>({ socket: null });
 
 export const useSocket = () => {
-  const context = useContext(SocketContext);
-  if (!context) {
-    throw new Error('useSocket must be used within a SocketProvider');
-  }
-  return context;
+  return useContext(SocketContext);
 };
 
-// Your backend server URL
-const SOCKET_SERVER_URL = 'http://localhost:5000';
+interface SocketProviderProps {
+  children: ReactNode;
+}
 
-export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
-  const { user } = useAuth();
+  const { user } = useAuth(); // Get the logged-in user
 
   useEffect(() => {
     if (user) {
-      // If a user is logged in, create a new socket connection
-      const newSocket = io(SOCKET_SERVER_URL, {
-        query: {
-          userId: user.id, // Send user ID to the backend for room joining
-        },
-      });
+      // --- THIS IS THE FIX ---
+      // Explicitly connect to your backend server URL
+      const newSocket = io('http://localhost:5000');
+
       setSocket(newSocket);
 
-      // Cleanup function to close the connection when the component unmounts or user logs out
+      // Tell the server who we are by emitting 'addUser'
+      newSocket.emit('addUser', user.id);
+
+      // Clean up the connection when the component unmounts or user logs out
       return () => {
-        newSocket.close();
+        newSocket.disconnect();
       };
     } else {
-      // If there's no user, make sure there's no active socket connection
+      // If there's no user, disconnect any existing socket
       if (socket) {
-        socket.close();
+        socket.disconnect();
         setSocket(null);
       }
     }
-  }, [user]);
+  }, [user]); // Re-run this effect when the user logs in or out
 
   return (
     <SocketContext.Provider value={{ socket }}>
