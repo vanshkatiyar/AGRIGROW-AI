@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, Link, useLocation } from 'react-router-dom';
+import { Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,26 +16,33 @@ interface LoginForm {
 
 const Login = () => {
   const [error, setError] = useState('');
-  const { login, isAuthenticated, isLoading, user } = useAuth();
+  const { login, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
+  const navigate = useNavigate(); // --- CHANGE: Add useNavigate hook ---
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>();
 
   const from = location.state?.from?.pathname || '/';
 
   if (isAuthenticated) {
-    if (user && !user.role) {
-      return <Navigate to="/select-role" replace />;
-    }
+    // This part is fine, it prevents logged-in users from seeing the login page
     return <Navigate to={from} replace />;
   }
 
+  // --- CHANGE: Updated onSubmit function with explicit navigation ---
   const onSubmit = async (data: LoginForm) => {
     setError('');
     try {
-      await login(data.email, data.password);
+      const loggedInUser = await login(data.email, data.password);
       toast({ title: "Welcome back!", description: "You have successfully logged in." });
+      
+      // Explicitly navigate based on the user's role
+      if (loggedInUser && !loggedInUser.role) {
+        navigate('/select-role', { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
     }
@@ -45,15 +52,11 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/20 to-primary/5 p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          
-          {/* --- THIS BLOCK IS REPLACED --- */}
           <img 
             src="/AgriGro-Logo.png" 
             alt="AgriGrow Logo" 
             className="w-16 h-16 mx-auto mb-4" 
           />
-          {/* --- END OF REPLACEMENT --- */}
-
           <h1 className="text-3xl font-bold text-primary">AgriGrow</h1>
           <p className="text-muted-foreground mt-2">Connect with the farming community</p>
         </div>

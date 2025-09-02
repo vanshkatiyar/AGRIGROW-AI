@@ -1,3 +1,4 @@
+import { Navigate } from 'react-router-dom'; // --- CHANGE: Import Navigate ---
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,18 +21,15 @@ import { mockPosts, mockWeatherData } from '@/services/mockData';
 const Home = () => {
   const { user } = useAuth();
 
-  // Redirect to role-specific dashboard
+  // --- CHANGE: Use Navigate for client-side routing ---
   if (user?.role === 'farmer') {
-    window.location.href = '/farmer-dashboard';
-    return null;
+    return <Navigate to="/farmer-dashboard" replace />;
   }
   if (user?.role === 'buyer') {
-    window.location.href = '/buyer-dashboard';
-    return null;
+    return <Navigate to="/buyer-dashboard" replace />;
   }
   if (user?.role === 'expert') {
-    window.location.href = '/expert-dashboard';
-    return null;
+    return <Navigate to="/expert-dashboard" replace />;
   }
 
   const stats = [
