@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useAuth } from './AuthContext'; // Assuming you have AuthContext to get user info
+import { useAuth } from './AuthContext';
 
 interface SocketContextType {
   socket: Socket | null;
+  onlineUsers: string[];
 }
 
-const SocketContext = createContext<SocketContextType>({ socket: null });
+const SocketContext = createContext<SocketContextType>({ socket: null, onlineUsers: [] });
 
 export const useSocket = () => {
   return useContext(SocketContext);
@@ -18,34 +19,35 @@ interface SocketProviderProps {
 
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
-  const { user } = useAuth(); // Get the logged-in user
+  const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+  const { user } = useAuth();
 
   useEffect(() => {
     if (user) {
-      // --- THIS IS THE FIX ---
-      // Explicitly connect to your backend server URL
-      const newSocket = io('http://localhost:5000');
+      const newSocket = io(import.meta.env.VITE_API_BASE_URL, {
+        auth: { token: localStorage.getItem('token') },
+      });
 
       setSocket(newSocket);
 
-      // Tell the server who we are by emitting 'addUser'
-      newSocket.emit('addUser', user.id);
+      // Listen for online users from the server
+      newSocket.on('getOnlineUsers', (users) => {
+        setOnlineUsers(users);
+      });
 
-      // Clean up the connection when the component unmounts or user logs out
       return () => {
         newSocket.disconnect();
       };
     } else {
-      // If there's no user, disconnect any existing socket
       if (socket) {
         socket.disconnect();
         setSocket(null);
       }
     }
-  }, [user]); // Re-run this effect when the user logs in or out
+  }, [user]);
 
   return (
-    <SocketContext.Provider value={{ socket }}>
+    <SocketContext.Provider value={{ socket, onlineUsers }}>
       {children}
     </SocketContext.Provider>
   );
