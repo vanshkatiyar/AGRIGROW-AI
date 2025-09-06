@@ -14,6 +14,7 @@ import Marketplace from "./pages/Marketplace";
 import Weather from "./pages/Weather";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import ForgotPassword from "./pages/auth/ForgotPassword"; // --- IMPORT NEW PAGE ---
 import SelectRole from "./pages/SelectRole";
 import NotFound from "./pages/NotFound";
 import FarmerDashboard from "./pages/farmer/FarmerDashboard";
@@ -44,6 +45,7 @@ const App = () => (
               {/* Public Routes */}
               <Route path="/auth/login" element={<Login />} />
               <Route path="/auth/register" element={<Register />} />
+              <Route path="/auth/forgot-password" element={<ForgotPassword />} /> {/* --- ADD NEW ROUTE --- */}
 
               {/* Protected Routes */}
               <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
@@ -61,7 +63,6 @@ const App = () => (
               <Route path="/buyer-expenses" element={<ProtectedRoute><BuyerExpenseTracker /></ProtectedRoute>} />
               <Route path="/expert-expenses" element={<ProtectedRoute><ExpertExpenseTracker /></ProtectedRoute>} />
               
-              {/* --- THIS ROUTE IS NOW DYNAMIC --- */}
               <Route path="/profile/:userId" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
               
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />

@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { AuthBrandingPanel } from '@/components/common/AuthBrandingPanel';
 
 interface LoginForm {
   email: string;
@@ -16,28 +17,26 @@ interface LoginForm {
 
 const Login = () => {
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const { login, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
-  const navigate = useNavigate(); // --- CHANGE: Add useNavigate hook ---
-  
+  const navigate = useNavigate();
+
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>();
 
   const from = location.state?.from?.pathname || '/';
 
   if (isAuthenticated) {
-    // This part is fine, it prevents logged-in users from seeing the login page
     return <Navigate to={from} replace />;
   }
 
-  // --- CHANGE: Updated onSubmit function with explicit navigation ---
   const onSubmit = async (data: LoginForm) => {
     setError('');
     try {
       const loggedInUser = await login(data.email, data.password);
       toast({ title: "Welcome back!", description: "You have successfully logged in." });
       
-      // Explicitly navigate based on the user's role
       if (loggedInUser && !loggedInUser.role) {
         navigate('/select-role', { replace: true });
       } else {
@@ -49,39 +48,67 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/20 to-primary/5 p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <img 
-            src="/AgriGro-Logo.png" 
-            alt="AgriGrow Logo" 
-            className="w-16 h-16 mx-auto mb-4" 
-          />
-          <h1 className="text-3xl font-bold text-primary">AgriGrow</h1>
-          <p className="text-muted-foreground mt-2">Connect with the farming community</p>
-        </div>
-        <Card className="shadow-lg">
-          <CardHeader><CardTitle>Welcome back</CardTitle><CardDescription>Sign in to your account to continue</CardDescription></CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              {error && (<Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>)}
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="your.email@example.com" autoComplete="off" {...register('email', { required: 'Email is required' })}/>
-                {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" placeholder="Enter password" autoComplete="off" {...register('password', { required: 'Password is required' })}/>
-                {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
-              </div>
-              <Button type="submit" className="w-full bg-gradient-to-r from-primary to-primary-glow" disabled={isLoading}>{isLoading ? 'Signing in...' : 'Sign in'}</Button>
-            </form>
-            <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground">Don't have an account?{' '}<Link to="/auth/register" className="text-primary hover:underline font-medium">Sign up</Link></p>
+    <div className="min-h-screen flex">
+      <AuthBrandingPanel />
+
+      {/* Right Side - Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background">
+        <div className="w-full max-w-md space-y-8">
+          {/* Mobile Header */}
+          <div className="lg:hidden text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
+              <img src="/AgriGro-Logo.png" alt="AgriGrow Logo" className="w-12 h-12" />
             </div>
-          </CardContent>
-        </Card>
+            <h1 className="text-2xl font-bold text-foreground">AgriGrow</h1>
+          </div>
+
+          <div className="text-center lg:text-left">
+            <h2 className="text-3xl font-bold text-foreground mb-2">Welcome Back</h2>
+            <p className="text-muted-foreground">Sign in to your AgriGrow account</p>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {error && (<Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>)}
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium text-foreground">Email Address</Label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
+                <Input id="email" type="email" placeholder="your.email@example.com" {...register('email', { required: 'Email is required' })}/>
+              </div>
+              {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
+                <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" {...register('password', { required: 'Password is required' })}/>
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors">{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button>
+              </div>
+              {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
+            </div>
+            <div className="text-right">
+                <button
+                    type="button"
+                    onClick={() => navigate('/auth/forgot-password')}
+                    className="text-sm font-medium text-primary hover:underline"
+                >
+                    Forgot Password?
+                </button>
+            </div>
+            <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? 'Signing in...' : 'Sign In'}</Button>
+          </form>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+            <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">or</span></div>
+          </div>
+
+          <div className="text-center">
+            <button onClick={() => navigate('/auth/register')} className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Don't have an account? <span className="text-primary font-medium">Sign up</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
