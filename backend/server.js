@@ -5,7 +5,6 @@ const http = require('http');
 const { Server } = require("socket.io");
 const cors = require('cors');
 const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
 
 // --- Environment Variable Configuration ---
 const credentialsPath = path.join(__dirname, 'google-credentials.json');
@@ -19,10 +18,16 @@ mongoose.connect(process.env.MONGO_URI)
 
 // --- Mongoose Models and Middleware ---
 const User = require('./models/User');
-const Message = require('./models/Message');
-const Group = require('./models/Group');
-const Conversation = require('./models/Conversation');
 const { protect } = require('./middleware/authMiddleware');
+
+// Create the Message Model for the chat functionality
+const messageSchema = new mongoose.Schema({
+    senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    recipientId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    content: { type: String, required: true },
+}, { timestamps: true });
+const Message = mongoose.model('Message', messageSchema);
+
 
 // --- Express App Setup ---
 const app = express();
@@ -39,8 +44,7 @@ const postRoutes = require('./routes/postRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
 const productRoutes = require('./routes/productRoutes');
 const cropDoctorRoutes = require('./routes/cropDoctorRoutes');
-const messageRoutes = require('./routes/messageRoutes');
-const pushRoutes = require('./routes/pushRoutes');
+const cropRoutes = require('./routes/cropRoutes'); // <-- IMPORT CROP ROUTES
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
@@ -51,99 +55,47 @@ app.use('/api/posts', postRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/crop-doctor', cropDoctorRoutes);
-app.use('/api/messages', messageRoutes);
-app.use('/api/push', pushRoutes);
+app.use('/api/crops', cropRoutes); // <-- REGISTER CROP ROUTES
 
 
 // --- Server and Socket.IO Setup ---
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] }});
+const io = new Server(server, { cors: { origin: "http://localhost:8080", methods: ["GET", "POST"] }});
 
-let onlineUsers = {}; // Maps userId to socketId
-
-// Socket.io authentication middleware
-io.use((socket, next) => {
-    const token = socket.handshake.auth.token;
-    if (!token) {
-        return next(new Error('Authentication error: No token provided'));
-    }
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-        if (err) {
-            return next(new Error('Authentication error: Invalid token'));
-        }
-        socket.userId = decoded.id;
-        next();
-    });
-});
-
+let onlineUsers = {};
 
 io.on('connection', (socket) => {
-    console.log(`User connected: ${socket.userId} with socket ID: ${socket.id}`);
-    
-    // Add user to online list and join their private room
-    onlineUsers[socket.userId] = socket.id;
-    socket.join(socket.userId);
+    console.log(`A user connected: ${socket.id}`);
 
-    // Join all group chats the user is a part of
-    Group.find({ participants: socket.userId }).then(groups => {
-        groups.forEach(group => socket.join(group._id.toString()));
+    socket.on('addUser', (userId) => {
+        onlineUsers[userId] = socket.id;
+        console.log(`User ${userId} is online.`);
     });
 
-    // Handle 1-on-1 private messages
-    socket.on('sendMessage', async ({ recipientId, content, type = 'text' }) => {
+    socket.on('sendMessage', async ({ senderId, recipientId, content }) => {
         try {
-            // Find or create a conversation
-            let conversation = await Conversation.findOneAndUpdate(
-                { participants: { $all: [socket.userId, recipientId] } },
-                { $set: { participants: [socket.userId, recipientId] } },
-                { upsert: true, new: true }
-            );
-
-            const newMessage = new Message({
-                senderId: socket.userId,
-                recipientId,
-                content,
-                type,
-                conversationId: conversation._id
-            });
+            const newMessage = new Message({ senderId, recipientId, content });
             await newMessage.save();
-
-            conversation.lastMessage = newMessage._id;
-            await conversation.save();
 
             const recipientSocketId = onlineUsers[recipientId];
             if (recipientSocketId) {
                 io.to(recipientSocketId).emit('newMessage', newMessage);
             }
         } catch (error) {
-            console.error('Error sending message:', error);
-        }
-    });
-    
-    // Handle group messages
-    socket.on('sendGroupMessage', async ({ groupId, content, type = 'text' }) => {
-        try {
-            const newMessage = new Message({
-                senderId: socket.userId,
-                groupId,
-                content,
-                type,
-            });
-            await newMessage.save();
-            
-            // Emit to all members of the group including the sender
-            io.to(groupId).emit('newMessage', newMessage);
-        } catch (error) {
-            console.error('Error sending group message:', error);
+            console.error('Error handling sendMessage:', error);
         }
     });
 
     socket.on('disconnect', () => {
-        delete onlineUsers[socket.userId];
-        console.log(`User disconnected: ${socket.userId}`);
+        for (let userId in onlineUsers) {
+            if (onlineUsers[userId] === socket.id) {
+                delete onlineUsers[userId];
+                console.log(`User ${userId} went offline.`);
+                break;
+            }
+        }
     });
 });
-
 
 // --- Start Server ---
 const PORT = process.env.PORT || 5000;

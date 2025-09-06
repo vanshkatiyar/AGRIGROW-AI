@@ -1,58 +1,55 @@
+// backend/routes/cropDoctorRoutes.js
+
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const multer = require('multer');
+const FormData = require('form-data'); // <-- Add this line
 const { protect } = require('../middleware/authMiddleware');
 
+// Use memory storage to handle the file as a buffer
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// --- THIS IS THE FINAL FIX ---
-// We are switching to Microsoft's ResNet model, which is one of the most
-// reliable and always-on models on the free Inference API.
-const HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/microsoft/resnet-50";
+// The URL of your Python Flask microservice
+const PYTHON_AI_SERVICE_URL = 'http://localhost:5001/predict';
 
+/**
+ * @route   POST /api/crop-doctor/diagnose
+ * @desc    Receives an image, forwards it to the Python AI service, and returns the diagnosis.
+ * @access  Private
+ */
 router.post('/diagnose', protect, upload.single('image'), async (req, res) => {
-    const API_KEY = process.env.HUGGINGFACE_API_KEY;
+  if (!req.file) {
+    return res.status(400).json({ message: 'An image file is required for diagnosis.' });
+  }
 
-    if (!API_KEY) {
-        return res.status(500).json({ message: 'Server configuration error: Hugging Face API key not set.' });
-    }
+  try {
+    // Create a new FormData instance to send to the Python service
+    const form = new FormData();
+    // Append the image buffer from multer
+    form.append('image', req.file.buffer, {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype,
+    });
+
+    // --- THIS IS THE CHANGE ---
+    // Make a POST request to the Python service with the image data
+    const { data } = await axios.post(PYTHON_AI_SERVICE_URL, form, {
+      headers: {
+        ...form.getHeaders(),
+      },
+    });
     
-    if (!req.file) {
-        return res.status(400).json({ message: 'Image is required.' });
-    }
+    // The 'data' received from Python is already in the correct JSON format.
+    // We just forward it directly to the frontend.
+    res.json(data);
 
-    try {
-        const headers = {
-            "Authorization": `Bearer ${API_KEY}`,
-            "Content-Type": req.file.mimetype,
-        };
-
-        console.log(`[Crop Doctor] Sending image to the reliable Microsoft ResNet model...`);
-        const { data } = await axios.post(HUGGINGFACE_API_URL, req.file.buffer, { headers });
-        console.log('[Crop Doctor] Received successful response from Hugging Face.');
-
-        if (data && Array.isArray(data) && data.length > 0) {
-            const topPrediction = data[0];
-            const confidence = (topPrediction.score * 100).toFixed(1);
-            
-            // This model gives general labels, not specific diagnoses.
-            // This response confirms that the entire system is working.
-            const answer = `### AI Analysis Report (System Working)\n\nThis is a test using a reliable image recognition model. It has successfully analyzed your image.\n\n**Detected Object:** ${topPrediction.label}\n\n**Confidence:** ${confidence}%\n\n**Conclusion:** This proves your API key, backend, and frontend are all working perfectly. The previous models were temporarily unavailable on the free tier. You can now search for other, more specific plant disease models on the Hugging Face Hub that are compatible with the free Inference API.`;
-            
-            res.json({ answer });
-        } else {
-             if (data && data.error && data.estimated_time) {
-                return res.status(503).json({ message: `The AI model is currently loading. Please try again in about ${Math.round(data.estimated_time)} seconds.` });
-            }
-            throw new Error('AI model returned an unexpected response format.');
-        }
-
-    } catch (error) {
-        console.error('Hugging Face API Error:', error.response ? error.response.data : error.message);
-        res.status(500).json({ message: 'Failed to get a response from the Crop Doctor AI.' });
-    }
+  } catch (error) {
+    console.error('AI service communication error:', error.message);
+    // Provide a more informative error to the frontend
+    res.status(502).json({ message: 'The Crop Doctor AI service is currently unavailable. Please try again later.' });
+  }
 });
 
 module.exports = router;
