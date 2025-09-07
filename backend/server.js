@@ -44,7 +44,10 @@ const postRoutes = require('./routes/postRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
 const productRoutes = require('./routes/productRoutes');
 const cropDoctorRoutes = require('./routes/cropDoctorRoutes');
-const cropRoutes = require('./routes/cropRoutes'); // <-- IMPORT CROP ROUTES
+const cropRoutes = require('./routes/cropRoutes');
+const consultationRoutes = require('./routes/consultationRoutes');
+const expertRoutes = require('./routes/expertRoutes');
+const articleRoutes = require('./routes/articleRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
@@ -55,7 +58,11 @@ app.use('/api/posts', postRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/crop-doctor', cropDoctorRoutes);
-app.use('/api/crops', cropRoutes); // <-- REGISTER CROP ROUTES
+app.use('/api/crops', cropRoutes);
+app.use('/api/consultations', consultationRoutes);
+app.use('/api/experts', expertRoutes);
+app.use('/api/articles', articleRoutes);
+
 
 
 // --- Server and Socket.IO Setup ---

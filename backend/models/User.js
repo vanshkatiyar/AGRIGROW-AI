@@ -11,9 +11,19 @@ const userSchema = new mongoose.Schema({
     gender: { type: String, enum: ['Male', 'Female', 'Other', 'Prefer not to say'] },
     profileImage: { type: String, default: 'https://i.pravatar.cc/150?u=default' },
     coverPhoto: { type: String, default: 'https://source.unsplash.com/1600x900/?nature,landscape' },
-    // We can add real stats later
-    // followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-    // following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+
+    // --- NEW FIELD TO STORE EXPERT-SPECIFIC DATA ---
+    expertDetails: {
+        specializations: {
+            type: [String],
+            default: [],
+        },
+        experienceYears: {
+            type: Number,
+            default: 0,
+        }
+    }
+    
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {
