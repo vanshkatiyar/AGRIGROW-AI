@@ -8,7 +8,7 @@ import { useMutation } from '@tanstack/react-query';
 import { diagnoseCrop, DiagnosisResult } from '@/services/cropDoctorService';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Stethoscope, UploadCloud, XCircle, Droplets } from 'lucide-react';
+import { Stethoscope, UploadCloud, XCircle, Droplets, Leaf, ShieldCheck, AlertTriangle, Sprout, Bug } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Result Card Component to display the diagnosis
@@ -46,7 +46,7 @@ const ResultCard: React.FC<{ data: DiagnosisResult }> = ({ data }) => {
             <h3 className="font-semibold mb-3">Recommended Actions</h3>
             <div className="space-y-3 text-sm">
               {remedy.cause && <p><span className="font-medium text-muted-foreground">Cause:</span> {remedy.cause}</p>}
-              {remedy.chemical && <div className="flex items-start gap-2"><Spray className="h-4 w-4 mt-0.5 shrink-0 text-primary"/><p><span className="font-semibold">Chemical Remedy:</span> {remedy.chemical}</p></div>}
+              {remedy.chemical && <div className="flex items-start gap-2"><Sprout className="h-4 w-4 mt-0.5 shrink-0 text-primary"/><p><span className="font-semibold">Chemical Remedy:</span> {remedy.chemical}</p></div>}
               {remedy.biological && <div className="flex items-start gap-2"><Bug className="h-4 w-4 mt-0.5 shrink-0 text-green-600"/><p><span className="font-semibold">Biological Control:</span> {remedy.biological}</p></div>}
               {remedy.cultural && <div className="flex items-start gap-2"><Leaf className="h-4 w-4 mt-0.5 shrink-0 text-orange-500"/><p><span className="font-semibold">Cultural Practices:</span> {remedy.cultural}</p></div>}
             </div>

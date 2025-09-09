@@ -17,16 +17,7 @@ mongoose.connect(process.env.MONGO_URI)
   .catch(err => console.error('MongoDB Connection Error:', err));
 
 // --- Mongoose Models and Middleware ---
-const User = require('./models/User');
-const { protect } = require('./middleware/authMiddleware');
-
-// Create the Message Model for the chat functionality
-const messageSchema = new mongoose.Schema({
-    senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    recipientId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    content: { type: String, required: true },
-}, { timestamps: true });
-const Message = mongoose.model('Message', messageSchema);
+// Models are imported in their respective route files
 
 
 // --- Express App Setup ---
@@ -48,6 +39,9 @@ const cropRoutes = require('./routes/cropRoutes');
 const consultationRoutes = require('./routes/consultationRoutes');
 const expertRoutes = require('./routes/expertRoutes');
 const articleRoutes = require('./routes/articleRoutes');
+const messageRoutes = require('./routes/messageRoutes');
+const callRoutes = require('./routes/callRoutes');
+const serviceRoutes = require('./routes/serviceRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
@@ -62,45 +56,125 @@ app.use('/api/crops', cropRoutes);
 app.use('/api/consultations', consultationRoutes);
 app.use('/api/experts', expertRoutes);
 app.use('/api/articles', articleRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/calls', callRoutes);
+app.use('/api/services', serviceRoutes);
 
 
 
 // --- Server and Socket.IO Setup ---
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "http://localhost:8080", methods: ["GET", "POST"] }});
+const io = new Server(server, { 
+    cors: { 
+        origin: "http://localhost:8080", 
+        methods: ["GET", "POST"],
+        credentials: true
+    }
+});
 
-let onlineUsers = {};
+// Import enhanced socket handlers
+const {
+    authenticateSocket,
+    handleConnection,
+    handleAddUser,
+    handleSendMessage,
+    handleJoinConversation,
+    handleLeaveConversation,
+    handleMarkAsRead,
+    handleTyping,
+    handleStopTyping,
+    handleCallOffer,
+    handleCallAnswer,
+    handleCallReject,
+    handleCallEnd,
+    handleIceCandidate,
+    handleMuteStatusChanged,
+    handleVideoStatusChanged,
+    handleCallConnected,
+    handleDisconnect
+} = require('./socket/messageSocketHandler');
 
-io.on('connection', (socket) => {
-    console.log(`A user connected: ${socket.id}`);
+// Socket authentication middleware
+io.use(authenticateSocket);
 
+io.on('connection', async (socket) => {
+    // Handle initial connection
+    await handleConnection(socket, io);
+
+    // Legacy support for addUser event
     socket.on('addUser', (userId) => {
-        onlineUsers[userId] = socket.id;
-        console.log(`User ${userId} is online.`);
+        handleAddUser(socket, userId, io);
     });
 
-    socket.on('sendMessage', async ({ senderId, recipientId, content }) => {
-        try {
-            const newMessage = new Message({ senderId, recipientId, content });
-            await newMessage.save();
-
-            const recipientSocketId = onlineUsers[recipientId];
-            if (recipientSocketId) {
-                io.to(recipientSocketId).emit('newMessage', newMessage);
-            }
-        } catch (error) {
-            console.error('Error handling sendMessage:', error);
-        }
+    // Enhanced message sending
+    socket.on('sendMessage', (data) => {
+        handleSendMessage(socket, data, io);
     });
 
+    // Conversation room management
+    socket.on('joinConversation', (conversationId) => {
+        handleJoinConversation(socket, conversationId);
+    });
+
+    socket.on('leaveConversation', (conversationId) => {
+        handleLeaveConversation(socket, conversationId);
+    });
+
+    // Message read receipts
+    socket.on('markAsRead', (messageId) => {
+        handleMarkAsRead(socket, messageId, io);
+    });
+
+    // Typing indicators
+    socket.on('typing', (data) => {
+        handleTyping(socket, data, io);
+    });
+
+    socket.on('stopTyping', (data) => {
+        handleStopTyping(socket, data, io);
+    });
+
+    // Video/Audio call handlers
+    socket.on('callOffer', (data) => {
+        handleCallOffer(socket, data, io);
+    });
+
+    socket.on('callAnswer', (data) => {
+        handleCallAnswer(socket, data, io);
+    });
+
+    socket.on('callReject', (data) => {
+        handleCallReject(socket, data, io);
+    });
+
+    socket.on('callEnd', (data) => {
+        handleCallEnd(socket, data, io);
+    });
+
+    socket.on('iceCandidate', (data) => {
+        handleIceCandidate(socket, data, io);
+    });
+
+    socket.on('muteStatusChanged', (data) => {
+        handleMuteStatusChanged(socket, data, io);
+    });
+
+    socket.on('videoStatusChanged', (data) => {
+        handleVideoStatusChanged(socket, data, io);
+    });
+
+    socket.on('callConnected', (data) => {
+        handleCallConnected(socket, data, io);
+    });
+
+    // Handle disconnect
     socket.on('disconnect', () => {
-        for (let userId in onlineUsers) {
-            if (onlineUsers[userId] === socket.id) {
-                delete onlineUsers[userId];
-                console.log(`User ${userId} went offline.`);
-                break;
-            }
-        }
+        handleDisconnect(socket, io);
+    });
+
+    // Error handling
+    socket.on('error', (error) => {
+        console.error(`Socket error for user ${socket.userId}:`, error);
     });
 });
 

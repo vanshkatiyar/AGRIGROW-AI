@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
-import { Sprout, CheckCircle, Users } from 'lucide-react';
+import { Sprout, CheckCircle, Users, Tractor, Bot, Package } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCrops, addCrop, harvestCrop } from '@/services/cropService';
@@ -16,6 +16,7 @@ import { format, differenceInDays, parseISO } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Crop } from '@/types';
 import { Link } from 'react-router-dom';
+import FarmerAIBot from '@/components/farmer/FarmerAIBot';
 
 const FarmerDashboard = () => {
     const { user } = useAuth();
@@ -90,9 +91,12 @@ const FarmerDashboard = () => {
                         <h1 className="text-3xl font-bold">Farmer Dashboard</h1>
                         <p className="text-muted-foreground">A complete overview of your farm's performance.</p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <Button asChild variant="outline">
-                            <Link to="/find-experts"><Users className="h-4 w-4 mr-2" />Consult an Expert</Link>
+                            <Link to="/service-discovery"><Tractor className="h-4 w-4 mr-2" />Find Services</Link>
+                        </Button>
+                        <Button asChild variant="outline">
+                            <Link to="/find-experts"><Users className="h-4 w-4 mr-2" />Consult Expert</Link>
                         </Button>
                         <Dialog open={isAddCropOpen} onOpenChange={setIsAddCropOpen}>
                             <DialogTrigger asChild>
@@ -111,6 +115,45 @@ const FarmerDashboard = () => {
                     <Card><CardHeader><CardTitle>Total Farm Expenses</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-red-500">₹{summary?.totalExpenses?.toLocaleString() ?? 0}</p></CardContent></Card>
                     <Card><CardHeader><CardTitle>Net Income</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">₹{summary?.netIncome?.toLocaleString() ?? 0}</p></CardContent></Card>
                 </div>
+
+                {/* Quick Service Access */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center space-x-2">
+                            <Package className="h-5 w-5" />
+                            <span>Quick Service Access</span>
+                        </CardTitle>
+                        <CardDescription>Find nearby agricultural services with one click</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <Button asChild variant="outline" className="h-20 flex-col space-y-2">
+                                <Link to="/service-discovery?type=tractor">
+                                    <Tractor className="h-6 w-6" />
+                                    <span className="text-sm">Tractor Owners</span>
+                                </Link>
+                            </Button>
+                            <Button asChild variant="outline" className="h-20 flex-col space-y-2">
+                                <Link to="/service-discovery?type=harvester">
+                                    <Package className="h-6 w-6" />
+                                    <span className="text-sm">Harvesters</span>
+                                </Link>
+                            </Button>
+                            <Button asChild variant="outline" className="h-20 flex-col space-y-2">
+                                <Link to="/service-discovery?type=supplier">
+                                    <Package className="h-6 w-6" />
+                                    <span className="text-sm">Suppliers</span>
+                                </Link>
+                            </Button>
+                            <Button asChild variant="outline" className="h-20 flex-col space-y-2">
+                                <Link to="/service-discovery?type=manufacturer">
+                                    <Package className="h-6 w-6" />
+                                    <span className="text-sm">Manufacturers</span>
+                                </Link>
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
 
                 <div className="grid md:grid-cols-3 gap-6">
                     <div className="md:col-span-2 space-y-6">
@@ -175,6 +218,9 @@ const FarmerDashboard = () => {
                                 )}
                             </CardContent>
                         </Card>
+
+                        {/* AI Assistant */}
+                        <FarmerAIBot />
                     </div>
                 </div>
             </div>

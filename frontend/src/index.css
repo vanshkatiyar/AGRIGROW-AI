@@ -2,6 +2,233 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global responsive improvements */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Ensure images are responsive by default */
+  img {
+    @apply max-w-full h-auto;
+  }
+  
+  /* Better touch targets on mobile */
+  @media (max-width: 768px) {
+    button, 
+    [role="button"], 
+    input[type="submit"], 
+    input[type="button"] {
+      @apply min-h-[44px] min-w-[44px];
+    }
+  }
+}
+
+@layer components {
+  /* Enhanced responsive container */
+  .container-responsive {
+    @apply w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16;
+    max-width: 100%;
+  }
+  
+  .container-tight {
+    @apply w-full mx-auto px-3 sm:px-4 lg:px-6;
+    max-width: 1200px;
+  }
+  
+  /* Enhanced responsive text utilities */
+  .text-responsive-xs {
+    @apply text-xs sm:text-sm lg:text-base;
+  }
+  
+  .text-responsive-sm {
+    @apply text-sm sm:text-base lg:text-lg;
+  }
+  
+  .text-responsive-base {
+    @apply text-base sm:text-lg lg:text-xl;
+  }
+  
+  .text-responsive-lg {
+    @apply text-lg sm:text-xl lg:text-2xl;
+  }
+  
+  .text-responsive-xl {
+    @apply text-xl sm:text-2xl lg:text-3xl;
+  }
+  
+  .text-responsive-2xl {
+    @apply text-2xl sm:text-3xl lg:text-4xl;
+  }
+  
+  .text-responsive-3xl {
+    @apply text-3xl sm:text-4xl lg:text-5xl;
+  }
+  
+  /* Touch-friendly utilities */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+  
+  .touch-target-sm {
+    @apply min-h-[36px] min-w-[36px] flex items-center justify-center;
+  }
+  
+  .touch-target-lg {
+    @apply min-h-[56px] min-w-[56px] flex items-center justify-center;
+  }
+  
+  /* Enhanced responsive spacing */
+  .space-responsive-x {
+    @apply space-x-2 sm:space-x-3 lg:space-x-4;
+  }
+  
+  .space-responsive-y {
+    @apply space-y-2 sm:space-y-3 lg:space-y-4;
+  }
+  
+  .gap-responsive {
+    @apply gap-2 sm:gap-3 lg:gap-4 xl:gap-6;
+  }
+  
+  .gap-responsive-sm {
+    @apply gap-1 sm:gap-2 lg:gap-3;
+  }
+  
+  .gap-responsive-lg {
+    @apply gap-3 sm:gap-4 lg:gap-6 xl:gap-8;
+  }
+  
+  .p-responsive {
+    @apply p-3 sm:p-4 lg:p-6 xl:p-8;
+  }
+  
+  .px-responsive {
+    @apply px-3 sm:px-4 lg:px-6 xl:px-8;
+  }
+  
+  .py-responsive {
+    @apply py-3 sm:py-4 lg:py-6 xl:py-8;
+  }
+  
+  .p-responsive-sm {
+    @apply p-2 sm:p-3 lg:p-4;
+  }
+  
+  .px-responsive-sm {
+    @apply px-2 sm:px-3 lg:px-4;
+  }
+  
+  .py-responsive-sm {
+    @apply py-2 sm:py-3 lg:py-4;
+  }
+  
+  /* Enhanced responsive grid utilities */
+  .grid-responsive-auto {
+    @apply grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5;
+  }
+  
+  .grid-responsive-1 {
+    @apply grid-cols-1;
+  }
+  
+  .grid-responsive-2 {
+    @apply grid-cols-1 sm:grid-cols-2;
+  }
+  
+  .grid-responsive-3 {
+    @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+  }
+  
+  .grid-responsive-4 {
+    @apply grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+  
+  .grid-responsive-5 {
+    @apply grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5;
+  }
+  
+  /* Enhanced responsive flex utilities */
+  .flex-responsive-col {
+    @apply flex-col sm:flex-row;
+  }
+  
+  .flex-responsive-row {
+    @apply flex-row sm:flex-col;
+  }
+  
+  .flex-responsive-wrap {
+    @apply flex-col sm:flex-row sm:flex-wrap;
+  }
+  
+  /* Mobile-first layout utilities */
+  .mobile-stack {
+    @apply flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4;
+  }
+  
+  .mobile-center {
+    @apply text-center sm:text-left;
+  }
+  
+  .mobile-full {
+    @apply w-full sm:w-auto;
+  }
+  
+  /* Responsive card layouts */
+  .card-responsive {
+    @apply p-4 sm:p-6 lg:p-8 rounded-lg sm:rounded-xl;
+  }
+  
+  .card-responsive-sm {
+    @apply p-3 sm:p-4 lg:p-6 rounded-md sm:rounded-lg;
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Better focus styles for accessibility */
+  .focus-visible-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  }
+  
+  /* Responsive aspect ratios */
+  .aspect-responsive-square {
+    @apply aspect-square;
+  }
+  
+  .aspect-responsive-video {
+    @apply aspect-video;
+  }
+  
+  /* Safe area padding for mobile devices */
+  .safe-area-padding {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  .safe-area-padding-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-padding-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
 /* EcoAuth Design System - Eco-conscious Theme
 All colors MUST be HSL for proper theming.
 */

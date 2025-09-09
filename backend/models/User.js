@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema({
     profileImage: { type: String, default: 'https://i.pravatar.cc/150?u=default' },
     coverPhoto: { type: String, default: 'https://source.unsplash.com/1600x900/?nature,landscape' },
 
-    // --- NEW FIELD TO STORE EXPERT-SPECIFIC DATA ---
+    // --- EXPERT-SPECIFIC DATA ---
     expertDetails: {
         specializations: {
             type: [String],
@@ -21,6 +21,27 @@ const userSchema = new mongoose.Schema({
         experienceYears: {
             type: Number,
             default: 0,
+        }
+    },
+
+    // --- MESSAGING-RELATED FIELDS ---
+    lastSeen: { 
+        type: Date, 
+        default: Date.now 
+    },
+    isOnline: { 
+        type: Boolean, 
+        default: false 
+    },
+    messagingPreferences: {
+        allowMessagesFrom: { 
+            type: String, 
+            enum: ['everyone', 'connections', 'none'], 
+            default: 'everyone' 
+        },
+        emailNotifications: { 
+            type: Boolean, 
+            default: true 
         }
     }
     
@@ -35,6 +56,73 @@ userSchema.pre('save', async function (next) {
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// Messaging-related methods
+userSchema.methods.setOnline = function() {
+    this.isOnline = true;
+    this.lastSeen = new Date();
+    return this.save();
+};
+
+userSchema.methods.setOffline = function() {
+    this.isOnline = false;
+    this.lastSeen = new Date();
+    return this.save();
+};
+
+userSchema.methods.canReceiveMessagesFrom = function(senderId) {
+    const { allowMessagesFrom } = this.messagingPreferences;
+    
+    if (allowMessagesFrom === 'none') return false;
+    if (allowMessagesFrom === 'everyone') return true;
+    
+    // For 'connections' - this would need to be implemented based on your connection logic
+    // For now, we'll allow everyone
+    return true;
+};
+
+// Static methods for messaging
+userSchema.statics.findUsersForMessaging = function(currentUserId, searchTerm = '', page = 1, limit = 20) {
+    const query = {
+        _id: { $ne: currentUserId },
+        'messagingPreferences.allowMessagesFrom': { $in: ['everyone', 'connections'] }
+    };
+
+    if (searchTerm) {
+        query.$or = [
+            { name: { $regex: searchTerm, $options: 'i' } },
+            { email: { $regex: searchTerm, $options: 'i' } }
+        ];
+    }
+
+    return this.find(query)
+        .select('name email profileImage isOnline lastSeen role')
+        .sort({ name: 1 })
+        .limit(limit * 1)
+        .skip((page - 1) * limit);
+};
+
+userSchema.statics.setUserOnline = function(userId) {
+    return this.findByIdAndUpdate(
+        userId,
+        { 
+            isOnline: true, 
+            lastSeen: new Date() 
+        },
+        { new: true }
+    );
+};
+
+userSchema.statics.setUserOffline = function(userId) {
+    return this.findByIdAndUpdate(
+        userId,
+        { 
+            isOnline: false, 
+            lastSeen: new Date() 
+        },
+        { new: true }
+    );
 };
 
 const User = mongoose.model('User', userSchema);

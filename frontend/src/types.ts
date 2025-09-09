@@ -13,16 +13,35 @@ export interface Conversation {
     _id: string;
     participants: User[];
     lastMessage?: Message;
-    // ... other properties
+    lastActivity: string;
+    unreadCount?: number;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface Message {
     _id: string;
-    senderId: any; // Can be a string or a User object if populated
-    recipientId?: string;
-    groupId?: string;
+    senderId: User | string;
+    recipientId: User | string;
+    conversationId: string;
     content: string;
-    type: 'text' | 'voice' | 'image';
+    messageType: 'text' | 'image' | 'file';
+    isRead: boolean;
+    isDelivered: boolean;
+    editedAt?: string;
+    deletedAt?: string;
     createdAt: string;
-    conversationId?: string;
+    updatedAt: string;
+}
+
+export interface OnlineStatus {
+    userId: string;
+    isOnline: boolean;
+    lastSeen?: string;
+}
+
+export interface TypingIndicator {
+    conversationId: string;
+    userId: string;
+    isTyping: boolean;
 }

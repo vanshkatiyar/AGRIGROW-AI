@@ -9,6 +9,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"],
-  "references": [{ "AGRIGROW-AI": "./tsconfig.node.json" }]
+  "include": ["src"]
 }

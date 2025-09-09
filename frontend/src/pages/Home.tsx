@@ -43,30 +43,30 @@ const Home = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="container-responsive py-responsive space-y-responsive-y">
         {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-primary/10 via-primary-glow/10 to-accent/10 rounded-xl p-6">
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            <Avatar className="h-16 w-16 border-4 border-white shadow-lg">
+        <div className="bg-gradient-to-r from-primary/10 via-primary-glow/10 to-accent/10 rounded-xl p-responsive card-responsive">
+          <div className="mobile-stack items-center">
+            <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-4 border-white shadow-lg flex-shrink-0">
               <AvatarImage src={user?.profileImage} alt={user?.name} />
-              <AvatarFallback className="bg-primary text-primary-foreground text-xl">
+              <AvatarFallback className="bg-primary text-primary-foreground text-xl sm:text-2xl">
                 {user?.name?.charAt(0)}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 text-center sm:text-left">
-              <h1 className="text-2xl font-bold text-foreground">
+            <div className="flex-1 mobile-center min-w-0">
+              <h1 className="text-responsive-2xl font-bold text-foreground mb-2">
                 Welcome back, {user?.name}! 👋
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-responsive-sm text-muted-foreground mb-3 line-clamp-2">
                 {user?.location} • {user?.roleData?.farmer?.crops?.join(', ') || user?.roleData?.buyer?.companyName || user?.roleData?.expert?.specializations?.join(', ') || 'No specialization'}
               </p>
                {user?.verified && (
-                 <Badge variant="secondary" className="mt-2">
+                 <Badge variant="secondary" className="text-xs sm:text-sm">
                    ✓ Verified {user?.role === 'farmer' ? 'Farmer' : user?.role === 'buyer' ? 'Buyer' : 'Expert'}
                  </Badge>
                )}
             </div>
-            <Button className="bg-gradient-to-r from-primary to-primary-glow w-full sm:w-auto">
+            <Button className="bg-gradient-to-r from-primary to-primary-glow mobile-full touch-target">
               <Plus className="h-4 w-4 mr-2" />
               Create Post
             </Button>
@@ -74,17 +74,17 @@ const Home = () => {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-responsive-4 gap-responsive">
           {stats.map((stat, index) => (
-            <Card key={index}>
-              <CardContent className="p-4">
+            <Card key={index} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-responsive-sm">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    <p className="text-xl font-bold">{stat.value}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-responsive-xs text-muted-foreground truncate">{stat.label}</p>
+                    <p className="text-responsive-lg font-bold truncate">{stat.value}</p>
                     <p className="text-xs text-success">{stat.trend}</p>
                   </div>
-                  <stat.icon className="h-8 w-8 text-primary" />
+                  <stat.icon className="h-6 w-6 sm:h-8 sm:w-8 text-primary flex-shrink-0 ml-2" />
                 </div>
               </CardContent>
             </Card>
