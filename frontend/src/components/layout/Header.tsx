@@ -23,7 +23,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+      <div className="container-responsive mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}><Menu className="h-5 w-5" /></Button>
 
@@ -40,7 +40,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
         </div>
 
-        <div className="flex-1 max-w-md mx-4 hidden md:block">
+        <div className="flex-1 max-w-md mx-4 hidden sm:block">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input placeholder="Search..." className="pl-10 bg-background" />

@@ -5,6 +5,7 @@ const ServiceRequest = require('../models/ServiceRequest');
 const User = require('../models/User');
 // --- FIX 1: Use destructuring to import the 'protect' function directly ---
 const { protect } = require('../middleware/authMiddleware');
+const upload = require('../middleware/uploadMiddleware');
 
 // Get nearby service providers
 // --- FIX 2: Use the 'protect' function as the middleware ---
@@ -95,6 +96,93 @@ router.get('/:id', protect, async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
+// Create or update a service provider profile
+router.post(
+    '/',
+    protect,
+    upload.fields([
+        { name: 'images', maxCount: 5 },
+        { name: 'equipmentImages', maxCount: 10 },
+        { name: 'productImages', maxCount: 10 }
+    ]),
+    async (req, res) => {
+        try {
+            const {
+                serviceType,
+                businessName,
+                description,
+                address,
+                latitude,
+                longitude,
+                phone,
+                email,
+                whatsapp,
+                equipment,
+                products,
+                serviceArea,
+                businessHours
+            } = req.body;
+
+            const owner = req.user.id;
+
+            // Basic validation
+            if (!serviceType || !businessName || !description || !address || !latitude || !longitude || !phone) {
+                return res.status(400).json({ message: 'Please fill all required fields.' });
+            }
+
+            const location = {
+                address,
+                coordinates: {
+                    latitude: parseFloat(latitude),
+                    longitude: parseFloat(longitude)
+                }
+            };
+
+            const contactInfo = { phone, email, whatsapp };
+
+            let parsedEquipment = equipment ? JSON.parse(equipment) : [];
+            if (req.files && req.files.equipmentImages) {
+                // Logic to associate uploaded images with equipment items
+            }
+
+            let parsedProducts = products ? JSON.parse(products) : [];
+            if (req.files && req.files.productImages) {
+                // Logic to associate uploaded images with product items
+            }
+
+            const serviceProviderData = {
+                owner,
+                serviceType,
+                businessName,
+                description,
+                location,
+                contactInfo,
+                equipment: parsedEquipment,
+                products: parsedProducts,
+                serviceArea: serviceArea ? JSON.parse(serviceArea) : undefined,
+                businessHours: businessHours ? JSON.parse(businessHours) : undefined,
+                isActive: true, // Automatically active on creation/update
+            };
+
+            let serviceProvider = await ServiceProvider.findOne({ owner });
+
+            if (serviceProvider) {
+                // Update existing profile
+                serviceProvider = await ServiceProvider.findOneAndUpdate({ owner }, serviceProviderData, { new: true });
+                res.json(serviceProvider);
+            } else {
+                // Create new profile
+                serviceProvider = new ServiceProvider(serviceProviderData);
+                await serviceProvider.save();
+                res.status(201).json(serviceProvider);
+            }
+        } catch (error) {
+            console.error('Error creating/updating service provider:', error);
+            res.status(500).json({ message: 'Server error' });
+        }
+    }
+);
 
 // Create service request
 router.post('/request', protect, async (req, res) => {

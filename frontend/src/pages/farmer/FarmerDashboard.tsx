@@ -42,7 +42,16 @@ const FarmerDashboard = () => {
 
     // --- Mutations ---
     const addCropMutation = useMutation({
-        mutationFn: addCrop,
+        mutationFn: (data: { name?: string; areaInAcres?: number; plantingDate?: Date; expectedYield?: string; estimatedRevenue?: number; }) => {
+            const cropData: Omit<Crop, '_id' | 'user' | 'status'> = {
+                name: data.name!,
+                areaInAcres: data.areaInAcres!,
+                plantingDate: data.plantingDate!.toISOString(),
+                expectedYield: data.expectedYield!,
+                estimatedRevenue: data.estimatedRevenue!,
+            };
+            return addCrop(cropData);
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['crops'] });
             toast({ title: "Crop Added!", description: "Your new crop is now being tracked." });
@@ -85,7 +94,7 @@ const FarmerDashboard = () => {
 
     return (
         <Layout>
-            <div className="container mx-auto p-4 sm:p-6 space-y-6">
+            <div className="container-responsive mx-auto p-4 sm:p-6 space-y-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-bold">Farmer Dashboard</h1>
@@ -128,25 +137,25 @@ const FarmerDashboard = () => {
                     <CardContent>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <Button asChild variant="outline" className="h-20 flex-col space-y-2">
-                                <Link to="/service-discovery?type=tractor">
+                                <Link to="/services/tractor">
                                     <Tractor className="h-6 w-6" />
                                     <span className="text-sm">Tractor Owners</span>
                                 </Link>
                             </Button>
                             <Button asChild variant="outline" className="h-20 flex-col space-y-2">
-                                <Link to="/service-discovery?type=harvester">
+                                <Link to="/services/harvester">
                                     <Package className="h-6 w-6" />
                                     <span className="text-sm">Harvesters</span>
                                 </Link>
                             </Button>
                             <Button asChild variant="outline" className="h-20 flex-col space-y-2">
-                                <Link to="/service-discovery?type=supplier">
+                                <Link to="/services/supplier">
                                     <Package className="h-6 w-6" />
                                     <span className="text-sm">Suppliers</span>
                                 </Link>
                             </Button>
                             <Button asChild variant="outline" className="h-20 flex-col space-y-2">
-                                <Link to="/service-discovery?type=manufacturer">
+                                <Link to="/services/manufacturer">
                                     <Package className="h-6 w-6" />
                                     <span className="text-sm">Manufacturers</span>
                                 </Link>
@@ -155,7 +164,7 @@ const FarmerDashboard = () => {
                     </CardContent>
                 </Card>
 
-                <div className="grid md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="md:col-span-2 space-y-6">
                         <Card>
                             <CardHeader><CardTitle>Active Crops</CardTitle><CardDescription>Monitor your active crops' growth and expected harvest.</CardDescription></CardHeader>

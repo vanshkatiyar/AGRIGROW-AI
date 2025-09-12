@@ -36,6 +36,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         {/* Main Content */}
         <main className={cn(
           'flex-1 min-h-[calc(100vh-4rem)]',
+          'p-4 sm:p-6 lg:p-8', // Add responsive padding
           'md:ml-0' // No margin on desktop since sidebar is positioned
         )}>
           {children}

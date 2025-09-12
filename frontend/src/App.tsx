@@ -46,6 +46,10 @@ import ExpertExpenseTracker from "./pages/expert/ExpertExpenseTracker";
 // Role-Specific Action Pages
 import CreateArticlePage from "./pages/expert/CreateArticlePage";
 import ServiceDiscovery from "./pages/farmer/ServiceDiscovery";
+import TractorServicePage from "./pages/farmer/services/TractorServicePage";
+import HarvesterServicePage from "./pages/farmer/services/HarvesterServicePage";
+import SupplierServicePage from "./pages/farmer/services/SupplierServicePage";
+import ManufacturerServicePage from "./pages/farmer/services/ManufacturerServicePage";
 
 // Initialize React Query Client
 const queryClient = new QueryClient();
@@ -99,8 +103,11 @@ const App = () => (
               <Route path="/consultation-history" element={<ProtectedRoute><ConsultationHistory /></ProtectedRoute>} />
               <Route path="/create-article" element={<ProtectedRoute><CreateArticlePage /></ProtectedRoute>} />
               <Route path="/find-experts" element={<ProtectedRoute><ExpertsPage /></ProtectedRoute>} />
-              <Route path="/service-discovery" element={<ProtectedRoute><ServiceDiscovery /></ProtectedRoute>} /> 
-              
+              <Route path="/service-discovery" element={<ProtectedRoute><ServiceDiscovery /></ProtectedRoute>} />
+              <Route path="/services/tractor" element={<ProtectedRoute><TractorServicePage /></ProtectedRoute>} />
+              <Route path="/services/harvester" element={<ProtectedRoute><HarvesterServicePage /></ProtectedRoute>} />
+              <Route path="/services/supplier" element={<ProtectedRoute><SupplierServicePage /></ProtectedRoute>} />
+              <Route path="/services/manufacturer" element={<ProtectedRoute><ManufacturerServicePage /></ProtectedRoute>} />
               {/* === Catch-all Route for 404 Not Found === */}
               <Route path="*" element={<NotFound />} />
             </Routes>

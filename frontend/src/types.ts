@@ -45,3 +45,21 @@ export interface TypingIndicator {
     userId: string;
     isTyping: boolean;
 }
+
+export interface Crop {
+  _id: string;
+  name: string;
+  areaInAcres: number;
+  plantingDate: string;
+  status: 'active' | 'harvested';
+  expectedYield: string;
+  estimatedRevenue: number;
+}
+
+export interface AddCropData {
+  name: string;
+  areaInAcres: number;
+  plantingDate: Date;
+  expectedYield: string;
+  estimatedRevenue: number;
+}
