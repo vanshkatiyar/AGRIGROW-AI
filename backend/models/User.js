@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     location: { type: String, required: true },
-    role: { type: String, enum: ['farmer', 'buyer', 'expert', null], default: null },
+    role: { type: String, enum: ['farmer', 'buyer', 'expert', 'serviceProvider', null], default: null },
     bio: { type: String, default: '' },
     gender: { type: String, enum: ['Male', 'Female', 'Other', 'Prefer not to say'] },
     profileImage: { type: String, default: 'https://i.pravatar.cc/150?u=default' },

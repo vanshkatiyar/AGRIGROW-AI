@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const cloudinary = require('../config/cloudinary');
 const User = require('../models/User');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 
 // Configure multer for in-memory file storage
 const storage = multer.memoryStorage();
@@ -26,21 +26,29 @@ router.get('/', protect, async (req, res) => {
     }
 });
 
-// @route   PUT /api/user/role
-// @desc    Update the logged-in user's role
-// @access  Private
-router.put('/role', protect, async (req, res) => {
+// @route   PUT /api/users/:id/role
+// @desc    Update a user's role
+// @access  Private (User can update their own role)
+router.put('/:id/role', protect, async (req, res) => {
     const { role } = req.body;
-    if (!['farmer', 'buyer', 'expert'].includes(role)) {
+    const userId = req.params.id;
+
+    // Ensure the role is one of the allowed roles
+    if (!['farmer', 'buyer', 'expert', 'serviceProvider'].includes(role)) {
         return res.status(400).json({ message: 'Invalid role specified' });
     }
+
     try {
-        const user = await User.findById(req.user.id);
+        // Ensure the logged-in user is updating their own role
+        if (req.user.id !== userId) {
+            return res.status(403).json({ message: 'Not authorized to update this user\'s role' });
+        }
+
+        const user = await User.findById(userId);
         if (user) {
             user.role = role;
             const updatedUser = await user.save();
             res.json({
-                // Return in the same format as login/register for consistency
                 _id: updatedUser._id,
                 name: updatedUser.name,
                 email: updatedUser.email,
@@ -51,6 +59,7 @@ router.put('/role', protect, async (req, res) => {
             res.status(404).json({ message: 'User not found' });
         }
     } catch (error) {
+        console.error('Error updating user role:', error);
         res.status(500).json({ message: 'Server error while updating role' });
     }
 });

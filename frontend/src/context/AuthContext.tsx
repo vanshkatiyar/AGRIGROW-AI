@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import axios from 'axios';
-import { User } from '@/types'; 
+import { User } from '@/types';
+import { useToast } from '@/hooks/use-toast'; // Import useToast
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -30,6 +31,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast(); // Initialize useToast
 
   useEffect(() => {
     const validateToken = async () => {
@@ -74,9 +76,49 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     window.location.href = '/auth/login';
   };
   
-  // You would implement these functions as needed
-  const register = async (userData: any) => { /* ... */ };
-  const updateUserRole = async (role: string) => { /* ... */ };
+  const register = async (userData: any) => {
+    setIsLoading(true);
+    try {
+      const response = await axios.post('http://localhost:5000/api/auth/register', userData);
+      const { token, user: userDataResponse } = response.data;
+      localStorage.setItem('token', token);
+      setUser(userDataResponse);
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+      throw error;
+    }
+  };
+
+  const updateUserRole = async (role: 'farmer' | 'buyer' | 'expert' | 'serviceProvider') => {
+    if (!user) {
+      throw new Error('User not logged in.');
+    }
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `http://localhost:5000/api/users/${user._id}/role`,
+        { role },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setUser(response.data.user);
+      toast({
+        title: "Role Updated",
+        description: `Your role has been updated to ${role}.`,
+      });
+    } catch (error: any) {
+      console.error('Error updating user role:', error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to update role.",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const value = { isAuthenticated: !!user, user, isLoading, login, logout, register, updateUserRole, setUser };
 

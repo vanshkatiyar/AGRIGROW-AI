@@ -4,7 +4,7 @@ export interface User {
     name: string;
     email: string;
     location: string;
-    role: 'farmer' | 'buyer' | 'expert' | null;
+    role: 'farmer' | 'buyer' | 'expert' | 'serviceProvider' | null;
     profileImage?: string;
     [key: string]: any; 
 }
@@ -62,4 +62,80 @@ export interface AddCropData {
   plantingDate: Date;
   expectedYield: string;
   estimatedRevenue: number;
+}
+
+export interface ServiceProviderProfile {
+    _id: string;
+    owner: User;
+    serviceType: 'tractor' | 'harvester' | 'supplier' | 'manufacturer';
+    businessName: string;
+    description: string;
+    location: {
+        address: string;
+        coordinates: {
+            latitude: number;
+            longitude: number;
+        };
+    };
+    contactInfo: {
+        phone: string;
+        email?: string;
+        whatsapp?: string;
+    };
+    equipment?: {
+        name: string;
+        model?: string;
+        year?: number;
+        hourlyRate?: number;
+        dailyRate?: number;
+        availability?: boolean;
+        images?: string[];
+    }[];
+    products?: {
+        name: string;
+        category?: string;
+        price?: number;
+        unit?: string;
+        description?: string;
+        images?: string[];
+        inStock?: boolean;
+    }[];
+    serviceArea?: {
+        radius?: number;
+        districts?: string[];
+    };
+    ratings: {
+        average: number;
+        count: number;
+    };
+    isVerified: boolean;
+    isActive: boolean;
+    businessHours?: {
+        monday: { open?: string; close?: string; isOpen: boolean };
+        tuesday: { open?: string; close?: string; isOpen: boolean };
+        wednesday: { open?: string; close?: string; isOpen: boolean };
+        thursday: { open?: string; close?: string; isOpen: boolean };
+        friday: { open?: string; close?: string; isOpen: boolean };
+        saturday: { open?: string; close?: string; isOpen: boolean };
+        sunday: { open?: string; close?: string; isOpen: boolean };
+    };
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface ServiceRequest {
+    _id: string;
+    farmer: User;
+    serviceProvider: ServiceProviderProfile;
+    serviceType: 'tractor' | 'harvester' | 'supplier' | 'manufacturer';
+    requestType: string; // e.g., 'rental', 'purchase', 'consultation'
+    serviceDetails: string;
+    status: 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
+    messages: {
+        sender: User;
+        message: string;
+        timestamp: string;
+    }[];
+    createdAt: string;
+    updatedAt: string;
 }

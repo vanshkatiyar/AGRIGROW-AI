@@ -1,4 +1,4 @@
-import { Home, Users, ShoppingBag, CloudSun, TrendingUp, Sparkles, Wallet, Stethoscope, History } from 'lucide-react';
+import { Home, Users, ShoppingBag, CloudSun, TrendingUp, Sparkles, Wallet, Stethoscope, History, Wrench } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -16,6 +16,8 @@ const farmerExpenseNav = { name: 'Farm Finances', href: '/farmer-expenses', icon
 const buyerExpenseNav = { name: 'Business Finances', href: '/buyer-expenses', icon: Wallet };
 const expertExpenseNav = { name: 'Earnings & Expenses', href: '/expert-expenses', icon: Wallet };
 const expertHistoryNav = { name: 'Consultation History', href: '/consultation-history', icon: History };
+const serviceProviderDashboardNav = { name: 'Service Dashboard', href: '/service-provider-dashboard', icon: Wrench };
+const offerServiceNav = { name: 'Offer Service', href: '/offer-service', icon: Wrench };
 
 interface SidebarProps {
   className?: string;
@@ -31,6 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
     ...(user?.role === 'farmer' ? [farmerExpenseNav] : []),
     ...(user?.role === 'buyer' ? [buyerExpenseNav] : []),
     ...(user?.role === 'expert' ? [expertExpenseNav, expertHistoryNav] : []),
+    ...(user?.role === 'serviceProvider' ? [serviceProviderDashboardNav, offerServiceNav] : []),
   ].sort((a, b) => {
     if (a.name === 'Home') return -1;
     if (b.name === 'Home') return 1;

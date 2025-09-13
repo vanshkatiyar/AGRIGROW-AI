@@ -12,8 +12,11 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'agrigrow-ai-services',
-    format: async (req, file) => 'png', // supports promises as well
-    public_id: (req, file) => file.originalname,
+    format: async () => 'png', // Always use PNG format
+    public_id: (req, file) => {
+      // Use original filename without extension as public_id
+      return file.originalname.split('.')[0];
+    },
   },
 });
 

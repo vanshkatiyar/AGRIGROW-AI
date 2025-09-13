@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
-import { Sprout, ShoppingCart, GraduationCap } from 'lucide-react';
+import { Sprout, ShoppingCart, GraduationCap, Wrench } from 'lucide-react';
 import { useState } from 'react'; // Import useState for loading state
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'; // Import a spinner
 
@@ -12,7 +12,7 @@ const SelectRole = () => {
 
   // --- THIS IS THE KEY FIX ---
   // The function is now async, and we await the role update.
-  const handleRoleSelect = async (role: 'farmer' | 'buyer' | 'expert') => {
+  const handleRoleSelect = async (role: 'farmer' | 'buyer' | 'expert' | 'serviceProvider') => {
     setIsLoading(true); // Start loading indicator
     try {
       await updateUserRole(role); // Wait for the backend to confirm the update
@@ -27,6 +27,9 @@ const SelectRole = () => {
           break;
         case 'expert':
           navigate('/expert-dashboard');
+          break;
+        case 'serviceProvider':
+          navigate('/service-provider-dashboard');
           break;
         default:
           navigate('/');
@@ -89,6 +92,17 @@ const SelectRole = () => {
               <GraduationCap className="h-12 w-12 text-orange-600 mb-4" />
               <CardTitle>I am an Expert</CardTitle>
               <CardDescription>I am an agricultural scientist or consultant offering my expertise.</CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card
+            className="cursor-pointer hover:border-primary hover:shadow-lg transition-all"
+            onClick={() => handleRoleSelect('serviceProvider')}
+          >
+            <CardHeader className="items-center">
+              <Wrench className="h-12 w-12 text-purple-600 mb-4" />
+              <CardTitle>I am a Service Provider</CardTitle>
+              <CardDescription>I offer various services like equipment rental, consulting, or product supply to farmers.</CardDescription>
             </CardHeader>
           </Card>
         </div>

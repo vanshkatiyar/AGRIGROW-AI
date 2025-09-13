@@ -37,6 +37,8 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import FarmerDashboard from "./pages/farmer/FarmerDashboard";
 import BuyerDashboard from "./pages/buyer/BuyerDashboard";
 import ExpertDashboard from "./pages/expert/ExpertDashboard";
+import ServiceProviderDashboard from "./pages/serviceProvider/ServiceProviderDashboard"; // New import
+import OfferServicePage from "./pages/serviceProvider/OfferServicePage"; // New import
 
 // Role-Specific Expense Tracker Pages
 import FarmerExpenseTracker from "./pages/farmer/FarmerExpenseTracker";
@@ -50,6 +52,9 @@ import TractorServicePage from "./pages/farmer/services/TractorServicePage";
 import HarvesterServicePage from "./pages/farmer/services/HarvesterServicePage";
 import SupplierServicePage from "./pages/farmer/services/SupplierServicePage";
 import ManufacturerServicePage from "./pages/farmer/services/ManufacturerServicePage";
+import OfferTractorServicePage from "./pages/farmer/services/OfferTractorServicePage";
+import OfferHarvesterServicePage from "./pages/farmer/services/OfferHarvesterServicePage";
+import OfferSupplierServicePage from "./pages/buyer/services/OfferSupplierServicePage";
 
 // Initialize React Query Client
 const queryClient = new QueryClient();
@@ -79,6 +84,8 @@ const App = () => (
               <Route path="/farmer-dashboard" element={<ProtectedRoute><FarmerDashboard /></ProtectedRoute>} />
               <Route path="/buyer-dashboard" element={<ProtectedRoute><BuyerDashboard /></ProtectedRoute>} />
               <Route path="/expert-dashboard" element={<ProtectedRoute><ExpertDashboard /></ProtectedRoute>} />
+              <Route path="/service-provider-dashboard" element={<ProtectedRoute><ServiceProviderDashboard /></ProtectedRoute>} /> {/* New route */}
+              <Route path="/offer-service" element={<ProtectedRoute><OfferServicePage /></ProtectedRoute>} /> {/* New route */}
               
               {/* Core Features */}
               <Route path="/feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
@@ -108,6 +115,9 @@ const App = () => (
               <Route path="/services/harvester" element={<ProtectedRoute><HarvesterServicePage /></ProtectedRoute>} />
               <Route path="/services/supplier" element={<ProtectedRoute><SupplierServicePage /></ProtectedRoute>} />
               <Route path="/services/manufacturer" element={<ProtectedRoute><ManufacturerServicePage /></ProtectedRoute>} />
+              <Route path="/farmer/services/offer-tractor" element={<ProtectedRoute><OfferTractorServicePage /></ProtectedRoute>} />
+              <Route path="/farmer/services/offer-harvester" element={<ProtectedRoute><OfferHarvesterServicePage /></ProtectedRoute>} />
+              <Route path="/buyer/services/offer-supplier" element={<ProtectedRoute><OfferSupplierServicePage /></ProtectedRoute>} />
               {/* === Catch-all Route for 404 Not Found === */}
               <Route path="*" element={<NotFound />} />
             </Routes>

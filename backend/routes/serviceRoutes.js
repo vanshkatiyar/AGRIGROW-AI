@@ -4,7 +4,7 @@ const ServiceProvider = require('../models/ServiceProvider');
 const ServiceRequest = require('../models/ServiceRequest');
 const User = require('../models/User');
 // --- FIX 1: Use destructuring to import the 'protect' function directly ---
-const { protect } = require('../middleware/authMiddleware');
+const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
 
 // Get nearby service providers
@@ -101,6 +101,7 @@ router.get('/:id', protect, async (req, res) => {
 router.post(
     '/',
     protect,
+    authorizeRoles('serviceProvider'),
     upload.fields([
         { name: 'images', maxCount: 5 },
         { name: 'equipmentImages', maxCount: 10 },
@@ -183,6 +184,93 @@ router.post(
         }
     }
 );
+
+// Get logged-in service provider's profile
+router.get('/my-profile', protect, authorizeRoles('serviceProvider'), async (req, res) => {
+    try {
+        const serviceProvider = await ServiceProvider.findOne({ owner: req.user.id })
+            .populate('owner', 'name profileImage email location');
+
+        if (!serviceProvider) {
+            return res.status(404).json({ message: 'Service provider profile not found' });
+        }
+        res.json(serviceProvider);
+    } catch (error) {
+        console.error('Error fetching service provider profile:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Get service requests for the logged-in service provider
+router.get('/requests/provider', protect, authorizeRoles('serviceProvider'), async (req, res) => {
+    try {
+        const serviceProviderOwnerId = req.user.id;
+        const { status, page = 1, limit = 10 } = req.query;
+
+        // Find the serviceProvider document associated with the owner ID
+        const serviceProvider = await ServiceProvider.findOne({ owner: serviceProviderOwnerId });
+
+        if (!serviceProvider) {
+            return res.status(404).json({ message: 'Service provider profile not found for this user.' });
+        }
+
+        let query = { serviceProvider: serviceProvider._id };
+        if (status) {
+            query.status = status;
+        }
+
+        const requests = await ServiceRequest.find(query)
+            .populate('farmer', 'name profileImage phone email')
+            .sort({ createdAt: -1 })
+            .limit(limit * 1)
+            .skip((page - 1) * limit);
+
+        const total = await ServiceRequest.countDocuments(query);
+
+        res.json({
+            requests,
+            totalPages: Math.ceil(total / limit),
+            currentPage: page,
+            total
+        });
+    } catch (error) {
+        console.error('Error fetching service requests for provider:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Update service request status by service provider
+router.put('/requests/:id/status', protect, authorizeRoles('serviceProvider'), async (req, res) => {
+    try {
+        const { status } = req.body;
+        const requestId = req.params.id;
+        const serviceProviderOwnerId = req.user.id;
+
+        // Find the serviceProvider document associated with the owner ID
+        const serviceProvider = await ServiceProvider.findOne({ owner: serviceProviderOwnerId });
+
+        if (!serviceProvider) {
+            return res.status(404).json({ message: 'Service provider profile not found for this user.' });
+        }
+
+        const serviceRequest = await ServiceRequest.findOne({
+            _id: requestId,
+            serviceProvider: serviceProvider._id
+        });
+
+        if (!serviceRequest) {
+            return res.status(404).json({ message: 'Service request not found or not authorized' });
+        }
+
+        serviceRequest.status = status;
+        await serviceRequest.save();
+
+        res.json(serviceRequest);
+    } catch (error) {
+        console.error('Error updating service request status:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
 
 // Create service request
 router.post('/request', protect, async (req, res) => {

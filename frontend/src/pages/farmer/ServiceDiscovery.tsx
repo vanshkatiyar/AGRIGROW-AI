@@ -25,55 +25,15 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
-
-interface ServiceProvider {
-  _id: string;
-  businessName: string;
-  description: string;
-  serviceType: 'tractor' | 'harvester' | 'supplier' | 'manufacturer';
-  location: {
-    address: string;
-    coordinates: { latitude: number; longitude: number };
-  };
-  contactInfo: {
-    phone: string;
-    email?: string;
-    whatsapp?: string;
-  };
-  equipment?: Array<{
-    name: string;
-    model: string;
-    hourlyRate: number;
-    dailyRate: number;
-    availability: boolean;
-    images: string[];
-  }>;
-  products?: Array<{
-    name: string;
-    category: string;
-    price: number;
-    unit: string;
-    description: string;
-    inStock: boolean;
-  }>;
-  ratings: {
-    average: number;
-    count: number;
-  };
-  owner: {
-    name: string;
-    profileImage: string;
-  };
-  isVerified: boolean;
-}
+import { ServiceProviderProfile } from '@/types'; // Import the shared type
 
 const ServiceDiscovery: React.FC = () => {
-  const [providers, setProviders] = useState<ServiceProvider[]>([]);
+  const [providers, setProviders] = useState<ServiceProviderProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedType, setSelectedType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [location, setLocation] = useState('');
-  const [selectedProvider, setSelectedProvider] = useState<ServiceProvider | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState<ServiceProviderProfile | null>(null);
   const [compareList, setCompareList] = useState<string[]>([]);
 
   const serviceTypes = [
@@ -127,7 +87,7 @@ const ServiceDiscovery: React.FC = () => {
     });
   };
 
-  const handleContactProvider = async (provider: ServiceProvider) => {
+  const handleContactProvider = async (provider: ServiceProviderProfile) => {
     try {
       const token = localStorage.getItem('token');
       await axios.post('/api/services/request', {
@@ -159,7 +119,7 @@ const ServiceDiscovery: React.FC = () => {
     return iconMap[type as keyof typeof iconMap] || Package;
   };
 
-  const ServiceProviderCard: React.FC<{ provider: ServiceProvider }> = ({ provider }) => {
+  const ServiceProviderCard: React.FC<{ provider: ServiceProviderProfile }> = ({ provider }) => {
     const ServiceIcon = getServiceIcon(provider.serviceType);
     
     return (
@@ -287,7 +247,7 @@ const ServiceDiscovery: React.FC = () => {
     );
   };
 
-  const ServiceProviderDetails: React.FC<{ provider: ServiceProvider }> = ({ provider }) => (
+  const ServiceProviderDetails: React.FC<{ provider: ServiceProviderProfile }> = ({ provider }) => (
     <div className="space-y-6">
       <div className="flex items-center space-x-4">
         <Avatar className="h-16 w-16">
