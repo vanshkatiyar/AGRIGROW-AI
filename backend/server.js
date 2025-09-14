@@ -23,7 +23,7 @@ mongoose.connect(process.env.MONGO_URI)
 // --- Express App Setup ---
 const app = express();
 app.use(cors({
-    origin: ["http://localhost:8080", "https://agrigrow-ai.vercel.app"],
+    origin: ["http://localhost:8080", "https://agrigrow-ai.vercel.app", "https://agrigrow-ai.onrender.com"],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"]
@@ -95,7 +95,7 @@ app.get('/', (req, res) => {
 const server = http.createServer(app);
 const io = new Server(server, { 
     cors: { 
-        origin: ["http://localhost:8080", "https://agrigrow-ai.vercel.app"],
+        origin: ["http://localhost:8080", "https://agrigrow-ai.vercel.app", "https://agrigrow-ai.onrender.com"],
         methods: ["GET", "POST"],
         credentials: true
     }
