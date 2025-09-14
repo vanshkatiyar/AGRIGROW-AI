@@ -66,7 +66,7 @@ app.use('/api/services', serviceRoutes);
 const server = http.createServer(app);
 const io = new Server(server, { 
     cors: { 
-        origin: "http://localhost:8080", 
+        origin: ["http://localhost:8080", "https://agrigrow-ai.vercel.app"],
         methods: ["GET", "POST"],
         credentials: true
     }
