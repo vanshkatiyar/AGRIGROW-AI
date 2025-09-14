@@ -38,7 +38,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const token = localStorage.getItem('authToken');
       if (token) {
         try {
-          const response = await axios.get('http://localhost:5000/api/auth/me', {
+          const response = await axios.get('http://VITE_API_BASE_URL/api/auth/me', {
             headers: { Authorization: `Bearer ${token}` },
           });
           setUser(response.data.user);
@@ -55,7 +55,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<User> => {
     setIsLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+      const response = await axios.post('http://VITE_API_BASE_URL/api/auth/login', { email, password });
       const { token, user: userData } = response.data;
       localStorage.setItem('authToken', token);
       setUser(userData);
@@ -79,7 +79,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (userData: any) => {
     setIsLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/register', userData);
+      const response = await axios.post('http://VITE_API_BASE_URL/api/auth/register', userData);
       const { token, user: userDataResponse } = response.data;
       localStorage.setItem('authToken', token);
       setUser(userDataResponse);
@@ -95,7 +95,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const token = localStorage.getItem('authToken');
       const response = await axios.put(
-        `http://localhost:5000/api/users/${userId}/role`,
+        `http://VITE_API_BASE_URL/api/users/${userId}/role`,
         { role },
         { headers: { Authorization: `Bearer ${token}` } }
       );

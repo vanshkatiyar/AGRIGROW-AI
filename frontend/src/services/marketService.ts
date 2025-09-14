@@ -4,7 +4,7 @@ import { mockMarketData, MarketDataRecord as MockRecord } from './mockMarketData
 // Re-export the type for use in components
 export type MarketDataRecord = MockRecord;
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL + '/api';
 
 export interface MarketDataResponse {
   records: MarketDataRecord[];
@@ -23,7 +23,7 @@ export const getMarketPrices = async (state: string, commodity: string): Promise
 
     // 1. Fetch live data from our backend
     const response = await axios.get(`${API_BASE_URL}/market/prices`, config);
-    const liveRecords: MarketDataRecord[] = (response.data.records || []).map((r: any) => ({ ...r, source: 'live' }));
+    const liveRecords: MarketDataRecord[] = (response.data.records || []).map((r: any) => ({ ...r, source: 'live' as 'live' }));
 
     // 2. Filter our mock data for relevant records
     const referenceRecords = mockMarketData.filter(
@@ -35,7 +35,7 @@ export const getMarketPrices = async (state: string, commodity: string): Promise
     
     const uniqueReferenceRecords = referenceRecords
       .filter(r => !liveMarkets.has(r.market.toLowerCase()))
-      .map(r => ({ ...r, source: 'reference' }));
+      .map(r => ({ ...r, source: 'reference' as 'reference' }));
 
     // 4. Create the final combined list
     const finalRecords = [...liveRecords, ...uniqueReferenceRecords];

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api/posts';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL + '/api/posts';
 
 const getConfig = () => ({
     headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }

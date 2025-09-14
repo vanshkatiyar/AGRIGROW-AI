@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Consultation } from '@/types'; 
 
-const API_URL = 'http://localhost:5000/api/consultations';
+const API_URL = import.meta.env.VITE_API_BASE_URL + '/api/consultations';
 
 // Helper function to get the token from localStorage
 const getToken = () => localStorage.getItem('token');

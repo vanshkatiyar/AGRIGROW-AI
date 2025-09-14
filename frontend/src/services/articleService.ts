@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Article } from '@/types';
 
-const API_URL = 'http://localhost:5000/api/articles';
+const API_URL = import.meta.env.VITE_API_BASE_URL + '/api/articles';
 
 const getToken = () => localStorage.getItem('token');
 const getAuthHeaders = () => {

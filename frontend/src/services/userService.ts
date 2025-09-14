@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { User } from '@/types'; // Assuming you have a User type defined in a types file
 
-const API_URL = 'http://localhost:5000/api/user';
+const API_URL = import.meta.env.VITE_API_BASE_URL + '/api/user';
 
 // Helper to get the auth token from localStorage
 const getToken = () => localStorage.getItem('token');
