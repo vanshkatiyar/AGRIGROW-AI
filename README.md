@@ -1,4 +1,29 @@
-# AgriGrow-AI
+<p align="center">
+  <img src="frontend/public/AgriGro-Logo.png" alt="AgriGrow-AI Logo" width="200"/>
+</p>
+
+<h1 align="center">AgriGrow-AI</h1>
+
+<p align="center">
+  <a href="https://nodejs.org/en/" target="_blank">
+    <img src="https://img.shields.io/badge/Node.js-v18+-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js v18+">
+  </a>
+  <a href="https://react.dev/" target="_blank">
+    <img src="https://img.shields.io/badge/React-Frontend-61DAFB?style=for-the-badge&logo=react&logoColor=white" alt="React Frontend">
+  </a>
+  <a href="https://expressjs.com/" target="_blank">
+    <img src="https://img.shields.io/badge/Express.js-Backend-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express.js Backend">
+  </a>
+  <a href="https://www.mongodb.com/" target="_blank">
+    <img src="https://img.shields.io/badge/MongoDB-Database-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB Database">
+  </a>
+  <a href="https://socket.io/" target="_blank">
+    <img src="https://img.shields.io/badge/Socket.IO-Realtime-010101?style=for-the-badge&logo=socket.io&logoColor=white" alt="Socket.IO Realtime">
+  </a>
+  <a href="https://cloud.google.com/vertex-ai" target="_blank">
+    <img src="https://img.shields.io/badge/Google_Cloud-Vertex_AI-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white" alt="Google Cloud Vertex AI">
+  </a>
+</p>
 
 ## Table of Contents
 - [About the Project](#about-the-project)
