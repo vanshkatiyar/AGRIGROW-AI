@@ -22,7 +22,12 @@ mongoose.connect(process.env.MONGO_URI)
 
 // --- Express App Setup ---
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: ["http://localhost:8080", "https://agrigrow-ai.vercel.app"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
 app.use(express.json());
 
 // --- API Routes ---
@@ -60,6 +65,30 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/calls', callRoutes);
 app.use('/api/services', serviceRoutes);
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'OK',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+    res.json({
+        message: 'AgriGrow AI Backend API',
+        version: '1.0.0',
+        status: 'Running',
+        endpoints: {
+            health: '/api/health',
+            auth: '/api/auth',
+            users: '/api/users',
+            posts: '/api/posts',
+            // Add other endpoints as needed
+        }
+    });
+});
 
 
 // --- Server and Socket.IO Setup ---
