@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { Crop } from '@/types';
+import { Crop, AddCropData } from '@/types';
 import { Link } from 'react-router-dom';
 import FarmerAIBot from '@/components/farmer/FarmerAIBot';
 
@@ -42,13 +42,13 @@ const FarmerDashboard = () => {
 
     // --- Mutations ---
     const addCropMutation = useMutation({
-        mutationFn: (data: { name?: string; areaInAcres?: number; plantingDate?: Date; expectedYield?: string; estimatedRevenue?: number; }) => {
-            const cropData: Omit<Crop, '_id' | 'user' | 'status'> = {
-                name: data.name!,
-                areaInAcres: data.areaInAcres!,
-                plantingDate: data.plantingDate!.toISOString(),
-                expectedYield: data.expectedYield!,
-                estimatedRevenue: data.estimatedRevenue!,
+        mutationFn: (data: AddCropData) => {
+            const cropData = {
+                name: data.name,
+                areaInAcres: data.areaInAcres,
+                plantingDate: data.plantingDate.toISOString(),
+                expectedYield: data.expectedYield,
+                estimatedRevenue: data.estimatedRevenue,
             };
             return addCrop(cropData);
         },
@@ -120,9 +120,9 @@ const FarmerDashboard = () => {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <Card><CardHeader><CardTitle>Total Farm Income</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-green-600">₹{summary?.totalIncome?.toLocaleString() ?? 0}</p></CardContent></Card>
-                    <Card><CardHeader><CardTitle>Total Farm Expenses</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-red-500">₹{summary?.totalExpenses?.toLocaleString() ?? 0}</p></CardContent></Card>
-                    <Card><CardHeader><CardTitle>Net Income</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">₹{summary?.netIncome?.toLocaleString() ?? 0}</p></CardContent></Card>
+                    <Card key="income-card"><CardHeader><CardTitle>Total Farm Income</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-green-600">₹{summary?.totalIncome?.toLocaleString() ?? 0}</p></CardContent></Card>
+                    <Card key="expenses-card"><CardHeader><CardTitle>Total Farm Expenses</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-red-500">₹{summary?.totalExpenses?.toLocaleString() ?? 0}</p></CardContent></Card>
+                    <Card key="net-income-card"><CardHeader><CardTitle>Net Income</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">₹{summary?.netIncome?.toLocaleString() ?? 0}</p></CardContent></Card>
                 </div>
 
                 {/* Quick Service Access */}
@@ -175,13 +175,13 @@ const FarmerDashboard = () => {
                                     crops.filter(c => c.status === 'active').map((crop) => {
                                         const { progress, daysRemaining } = calculateGrowth(crop.plantingDate);
                                         return (
-                                            <Card key={crop._id} className="p-4 bg-muted/20">
+                                            <Card key={crop.id} className="p-4 bg-muted/20">
                                                 <div className="flex justify-between items-start">
                                                     <div>
                                                         <h4 className="font-semibold text-lg">{crop.name}</h4>
                                                         <p className="text-sm text-muted-foreground">{crop.areaInAcres} acres</p>
                                                     </div>
-                                                    <Button size="sm" variant="outline" onClick={() => harvestCropMutation.mutate(crop._id)} disabled={harvestCropMutation.isPending}><CheckCircle className="h-4 w-4 mr-2"/>Mark as Harvested</Button>
+                                                    <Button size="sm" variant="outline" onClick={() => harvestCropMutation.mutate(crop.id)} disabled={harvestCropMutation.isPending}><CheckCircle className="h-4 w-4 mr-2"/>Mark as Harvested</Button>
                                                 </div>
                                                 <div className="mt-4 space-y-1">
                                                     <div className="flex justify-between text-xs text-muted-foreground mb-1">
@@ -216,7 +216,7 @@ const FarmerDashboard = () => {
                                     <p className="text-sm text-center text-muted-foreground">No income recorded yet.</p>
                                 ) : (
                                     expenses.filter(e => e.type === 'income').slice(0, 4).map(sale => (
-                                        <div key={sale._id} className="flex items-center justify-between">
+                                       <div key={sale._id} className="flex items-center justify-between">
                                             <div>
                                                 <p className="font-medium text-sm">{sale.title}</p>
                                                 <p className="text-xs text-muted-foreground">{format(parseISO(sale.date), 'dd MMM, yyyy')}</p>

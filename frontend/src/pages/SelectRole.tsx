@@ -15,7 +15,10 @@ const SelectRole = () => {
   const handleRoleSelect = async (role: 'farmer' | 'buyer' | 'expert' | 'serviceProvider') => {
     setIsLoading(true); // Start loading indicator
     try {
-      await updateUserRole(role); // Wait for the backend to confirm the update
+      if (!user || !user.id) {
+        throw new Error('User not authenticated or user ID not available.');
+      }
+      await updateUserRole(user.id, role); // Pass user.id and role
 
       // Now that the user's role is updated in the context, we can safely redirect.
       switch (role) {

@@ -83,7 +83,7 @@ const ExpertDashboard = () => {
         if (consultationRequests.length === 0) return <p className="text-center text-muted-foreground py-8">No pending requests at the moment.</p>;
         
         return consultationRequests.map((consultation) => (
-            <div key={consultation._id} className="border-b last:border-b-0 px-6 py-4">
+            <div key={consultation.id} className="border-b last:border-b-0 px-6 py-4">
                 <div className="flex flex-col sm:flex-row items-start justify-between gap-2">
                     <div className="flex items-start gap-3"><Avatar className="h-10 w-10"><AvatarImage src={consultation.farmer.profileImage} /><AvatarFallback>{consultation.farmer.name.charAt(0)}</AvatarFallback></Avatar><div><h4 className="font-semibold">{consultation.farmer.name}</h4><p className="text-sm text-muted-foreground">{consultation.farmer.location} • {consultation.cropType}</p><p className="text-sm mt-1">{consultation.issue}</p></div></div>
                     <div className="flex flex-col items-start sm:items-end gap-2 w-full sm:w-auto"><Badge className={urgencyColors[consultation.urgency]}>{consultation.urgency}</Badge><div className="flex items-center justify-end gap-2 w-full"><Button size="sm" variant="outline"><AlertCircle className="h-4 w-4 mr-1" />Details</Button><Button size="sm" onClick={() => handleAccept(consultation._id)} disabled={statusUpdateMutation.isPending}><CheckCircle className="h-4 w-4 mr-1" />Accept</Button></div></div>

@@ -49,7 +49,7 @@ router.put('/:id/role', protect, async (req, res) => {
             user.role = role;
             const updatedUser = await user.save();
             res.json({
-                _id: updatedUser._id,
+                id: updatedUser._id,
                 name: updatedUser.name,
                 email: updatedUser.email,
                 location: updatedUser.location,

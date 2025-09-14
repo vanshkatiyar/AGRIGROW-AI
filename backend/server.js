@@ -44,7 +44,7 @@ const callRoutes = require('./routes/callRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
 
 app.use('/api/auth', authRoutes);
-app.use('/api/user', userRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/weather', weatherRoutes);
 app.use('/api/market', marketRoutes);

@@ -69,7 +69,19 @@ const ExpenseTrackerPage = () => {
                     </div>
                     <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                         <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" /> Add Transaction</Button></DialogTrigger>
-                        <DialogContent><DialogHeader><DialogTitle>Add New Transaction</DialogTitle></DialogHeader><AddExpenseForm onSubmit={addMutation.mutate} onClose={() => setIsAddDialogOpen(false)} isPending={addMutation.isPending} /></DialogContent>
+                                                <DialogContent>
+                                                    <DialogHeader><DialogTitle>Add New Transaction</DialogTitle></DialogHeader>
+                                                    <AddExpenseForm
+                                                        onSubmit={(data) => {
+                                                            addMutation.mutate({
+                                                                ...data,
+                                                                date: data.date.toISOString(),
+                                                            } as Omit<Expense, '_id'>);
+                                                        }}
+                                                        onClose={() => setIsAddDialogOpen(false)}
+                                                        isPending={addMutation.isPending}
+                                                    />
+                                                </DialogContent>
                     </Dialog>
                 </div>
 

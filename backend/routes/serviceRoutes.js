@@ -80,6 +80,22 @@ router.get('/type/:serviceType', protect, async (req, res) => {
     }
 });
 
+// Get logged-in service provider's profile
+router.get('/my-profile', protect, authorizeRoles('serviceProvider'), async (req, res) => {
+    try {
+        const serviceProvider = await ServiceProvider.findOne({ owner: req.user.id })
+            .populate('owner', 'name profileImage email location');
+
+        if (!serviceProvider) {
+            return res.status(404).json({ message: 'Service provider profile not found' });
+        }
+        res.json(serviceProvider);
+    } catch (error) {
+        console.error('Error fetching service provider profile:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 // Get single service provider details
 router.get('/:id', protect, async (req, res) => {
     try {
@@ -184,22 +200,6 @@ router.post(
         }
     }
 );
-
-// Get logged-in service provider's profile
-router.get('/my-profile', protect, authorizeRoles('serviceProvider'), async (req, res) => {
-    try {
-        const serviceProvider = await ServiceProvider.findOne({ owner: req.user.id })
-            .populate('owner', 'name profileImage email location');
-
-        if (!serviceProvider) {
-            return res.status(404).json({ message: 'Service provider profile not found' });
-        }
-        res.json(serviceProvider);
-    } catch (error) {
-        console.error('Error fetching service provider profile:', error);
-        res.status(500).json({ message: 'Server error' });
-    }
-});
 
 // Get service requests for the logged-in service provider
 router.get('/requests/provider', protect, authorizeRoles('serviceProvider'), async (req, res) => {

@@ -22,7 +22,7 @@ import {
   Star
 } from 'lucide-react';
 import { toast } from 'sonner';
-import axios from 'axios';
+import { askAIAssistant } from '@/services/aiService';
 
 interface Message {
   id: string;
@@ -117,24 +117,24 @@ const FarmerAIBot: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await getBotResponse(messageToSend);
+      const response = await askAIAssistant(messageToSend);
       
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'bot',
-        content: response.content,
+        content: response.answer, // Use response.answer from aiService
         timestamp: new Date(),
-        suggestions: response.suggestions,
-        serviceRecommendations: response.serviceRecommendations
+        // The aiService currently only returns 'answer', not suggestions or serviceRecommendations.
+        // These would need to be added to the backend AI response if desired.
       };
 
       setMessages(prev => [...prev, botMessage]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error getting bot response:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'bot',
-        content: "I'm sorry, I'm having trouble processing your request right now. Please try again later.",
+        content: error.message || "I'm sorry, I'm having trouble processing your request right now. Please try again later.",
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -143,166 +143,6 @@ const FarmerAIBot: React.FC = () => {
     }
   };
 
-  const getBotResponse = async (message: string): Promise<{
-    content: string;
-    suggestions?: string[];
-    serviceRecommendations?: ServiceRecommendation[];
-  }> => {
-    // Simulate AI processing with intelligent responses based on keywords
-    const lowerMessage = message.toLowerCase();
-    
-    if (lowerMessage.includes('tractor') || lowerMessage.includes('plowing') || lowerMessage.includes('cultivation')) {
-      return {
-        content: "I found several tractor owners near your location. Here are the top recommendations based on ratings and proximity:",
-        suggestions: [
-          "Show tractor rental rates",
-          "Find tractor with specific attachments",
-          "Book tractor for tomorrow",
-          "Compare tractor owners"
-        ],
-        serviceRecommendations: [
-          {
-            id: '1',
-            name: "Rajesh Tractor Services",
-            type: 'tractor',
-            location: "2.5 km away",
-            rating: 4.8,
-            price: "₹800/day",
-            contact: "+91 98765 43210",
-            distance: "2.5 km"
-          },
-          {
-            id: '2',
-            name: "Modern Farm Equipment",
-            type: 'tractor',
-            location: "4.1 km away",
-            rating: 4.6,
-            price: "₹750/day",
-            contact: "+91 98765 43211",
-            distance: "4.1 km"
-          }
-        ]
-      };
-    }
-    
-    if (lowerMessage.includes('harvester') || lowerMessage.includes('harvest') || lowerMessage.includes('combine')) {
-      return {
-        content: "Here are the best harvester services available in your area:",
-        suggestions: [
-          "Check harvester availability",
-          "Compare harvester prices",
-          "Book harvester service",
-          "Find mini harvester"
-        ],
-        serviceRecommendations: [
-          {
-            id: '3',
-            name: "Singh Harvesting Co.",
-            type: 'harvester',
-            location: "3.2 km away",
-            rating: 4.9,
-            price: "₹1200/hour",
-            contact: "+91 98765 43212",
-            distance: "3.2 km"
-          }
-        ]
-      };
-    }
-    
-    if (lowerMessage.includes('supplier') || lowerMessage.includes('fertilizer') || lowerMessage.includes('seeds') || lowerMessage.includes('pesticide')) {
-      return {
-        content: "I found several agricultural suppliers near you offering quality products at competitive prices:",
-        suggestions: [
-          "Find organic fertilizers",
-          "Compare seed prices",
-          "Check pesticide availability",
-          "Find irrigation supplies"
-        ],
-        serviceRecommendations: [
-          {
-            id: '4',
-            name: "Green Valley Suppliers",
-            type: 'supplier',
-            location: "1.8 km away",
-            rating: 4.7,
-            price: "Best prices guaranteed",
-            contact: "+91 98765 43213",
-            distance: "1.8 km"
-          },
-          {
-            id: '5',
-            name: "Krishi Kendra",
-            type: 'supplier',
-            location: "5.0 km away",
-            rating: 4.5,
-            price: "Bulk discounts available",
-            contact: "+91 98765 43214",
-            distance: "5.0 km"
-          }
-        ]
-      };
-    }
-    
-    if (lowerMessage.includes('manufacturer') || lowerMessage.includes('equipment') || lowerMessage.includes('machinery')) {
-      return {
-        content: "Here are the top agricultural equipment manufacturers and dealers in your region:",
-        suggestions: [
-          "Find irrigation equipment",
-          "Compare machinery prices",
-          "Check warranty options",
-          "Find spare parts"
-        ],
-        serviceRecommendations: [
-          {
-            id: '6',
-            name: "Mahindra Tractors Dealer",
-            type: 'manufacturer',
-            location: "8.5 km away",
-            rating: 4.8,
-            price: "Authorized dealer",
-            contact: "+91 98765 43215",
-            distance: "8.5 km"
-          }
-        ]
-      };
-    }
-    
-    if (lowerMessage.includes('weather') || lowerMessage.includes('rain') || lowerMessage.includes('forecast')) {
-      return {
-        content: "Based on the latest weather forecast for your area:\n\n🌤️ Today: Partly cloudy, 28°C\n🌧️ Tomorrow: Light rain expected, 25°C\n☀️ This week: Good conditions for farming activities\n\nRecommendation: Complete any pending field work today before the rain tomorrow.",
-        suggestions: [
-          "7-day weather forecast",
-          "Rainfall predictions",
-          "Best farming days this week",
-          "Weather alerts for farming"
-        ]
-      };
-    }
-    
-    if (lowerMessage.includes('price') || lowerMessage.includes('market') || lowerMessage.includes('rate')) {
-      return {
-        content: "Current market prices in your area:\n\n🌾 Wheat: ₹2,150/quintal\n🌽 Maize: ₹1,850/quintal\n🍅 Tomato: ₹25/kg\n🥔 Potato: ₹18/kg\n\nPrices are trending upward this week. Good time to sell if you have stock ready.",
-        suggestions: [
-          "View all crop prices",
-          "Price trend analysis",
-          "Best selling locations",
-          "Price alerts setup"
-        ]
-      };
-    }
-    
-    // Default response for general queries
-    return {
-      content: "I can help you with various farming needs. Here's what I can assist you with:\n\n🚜 Find tractor and harvester owners\n📦 Locate suppliers for seeds, fertilizers, pesticides\n🏭 Connect with equipment manufacturers\n🌤️ Weather forecasts and farming advice\n💰 Market prices and trends\n\nWhat would you like to know more about?",
-      suggestions: [
-        "Find tractor owners near me",
-        "Show fertilizer suppliers",
-        "Weather forecast",
-        "Current market prices",
-        "Find harvester services"
-      ]
-    };
-  };
 
   const handleVoiceInput = () => {
     if (!recognition.current) {

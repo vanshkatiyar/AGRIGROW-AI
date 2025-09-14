@@ -47,6 +47,7 @@ export interface TypingIndicator {
 }
 
 export interface Crop {
+  id: string;
   _id: string;
   name: string;
   areaInAcres: number;
@@ -59,7 +60,7 @@ export interface Crop {
 export interface AddCropData {
   name: string;
   areaInAcres: number;
-  plantingDate: Date;
+  plantingDate: string;
   expectedYield: string;
   estimatedRevenue: number;
 }
@@ -124,6 +125,7 @@ export interface ServiceProviderProfile {
 }
 
 export interface ServiceRequest {
+    id: string;
     _id: string;
     farmer: User;
     serviceProvider: ServiceProviderProfile;
@@ -136,6 +138,35 @@ export interface ServiceRequest {
         message: string;
         timestamp: string;
     }[];
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Article {
+    id: string;
+    _id: string;
+    title: string;
+    content: string;
+    author: User;
+    tags: string[];
+    status: 'draft' | 'published';
+    likes: string[];
+    comments: string[];
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Consultation {
+    id: string;
+    _id: string;
+    farmer: User;
+    expert: User;
+    issue: string;
+    cropType: string;
+    status: 'pending' | 'accepted' | 'rejected' | 'completed';
+    urgency: 'low' | 'medium' | 'high';
+    consultationDate?: string;
+    notes?: string;
     createdAt: string;
     updatedAt: string;
 }

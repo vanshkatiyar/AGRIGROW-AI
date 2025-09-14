@@ -26,9 +26,17 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const { user } = useAuth();
 
+  const filteredBaseNavigation =
+    user?.role === 'serviceProvider'
+      ? baseNavigation.filter(
+          (item) =>
+            !['AI Assistant', 'Crop Doctor', 'Market Prices'].includes(item.name)
+        )
+      : baseNavigation;
+
   const navigation = [
     homeNav,
-    ...baseNavigation,
+    ...filteredBaseNavigation,
     ...(user?.role === 'farmer' || user?.role === 'buyer' ? [marketplaceNav] : []),
     ...(user?.role === 'farmer' ? [farmerExpenseNav] : []),
     ...(user?.role === 'buyer' ? [buyerExpenseNav] : []),

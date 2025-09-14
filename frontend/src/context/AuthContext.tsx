@@ -12,7 +12,7 @@ interface AuthContextType {
   logout: () => void;
   // Add other functions for completeness based on your app's needs
   register: (userData: any) => Promise<void>;
-  updateUserRole: (role: string) => Promise<void>;
+  updateUserRole: (userId: string, role: 'farmer' | 'buyer' | 'expert' | 'serviceProvider') => Promise<void>;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
 
@@ -35,7 +35,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const validateToken = async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       if (token) {
         try {
           const response = await axios.get('http://localhost:5000/api/auth/me', {
@@ -43,7 +43,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           });
           setUser(response.data.user);
         } catch (error) {
-          localStorage.removeItem('token');
+          localStorage.removeItem('authToken');
           setUser(null);
         }
       }
@@ -57,7 +57,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
       const { token, user: userData } = response.data;
-      localStorage.setItem('token', token);
+      localStorage.setItem('authToken', token);
       setUser(userData);
       setIsLoading(false);
       // --- CHANGE: Return the user data ---
@@ -70,7 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('authToken');
     setUser(null);
     // Redirect to login page after logout
     window.location.href = '/auth/login';
@@ -81,7 +81,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await axios.post('http://localhost:5000/api/auth/register', userData);
       const { token, user: userDataResponse } = response.data;
-      localStorage.setItem('token', token);
+      localStorage.setItem('authToken', token);
       setUser(userDataResponse);
       setIsLoading(false);
     } catch (error) {
@@ -90,19 +90,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const updateUserRole = async (role: 'farmer' | 'buyer' | 'expert' | 'serviceProvider') => {
-    if (!user) {
-      throw new Error('User not logged in.');
-    }
+  const updateUserRole = async (userId: string, role: 'farmer' | 'buyer' | 'expert' | 'serviceProvider') => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await axios.put(
-        `http://localhost:5000/api/users/${user._id}/role`,
+        `http://localhost:5000/api/users/${userId}/role`,
         { role },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setUser(response.data.user);
+      setUser(response.data);
       toast({
         title: "Role Updated",
         description: `Your role has been updated to ${role}.`,

@@ -46,7 +46,7 @@ const ConsultationHistory = () => {
         return history.map((item) => {
             const otherParty = user?.role === 'farmer' ? item.expert : item.farmer;
             return (
-                <Card key={item._id}>
+                <Card key={item.id}>
                     <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-start gap-4">
                         <div className="flex gap-4">
                             <Avatar className="h-12 w-12 hidden sm:flex">

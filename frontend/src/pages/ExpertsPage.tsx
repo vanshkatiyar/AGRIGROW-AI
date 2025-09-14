@@ -41,7 +41,7 @@ const ExpertsPage = () => {
 
     const handleSubmit = () => {
         if (issue && crop && selectedExpert) {
-            mutation.mutate({ expertId: selectedExpert._id, issue, cropType: crop });
+            mutation.mutate({ expertId: selectedExpert.id, issue, cropType: crop });
         } else {
             toast({ title: "Missing Information", description: "Please describe your issue and the crop type.", variant: "destructive" });
         }
@@ -60,7 +60,7 @@ const ExpertsPage = () => {
                         experts.length === 0 ? <p className="text-center text-muted-foreground py-12">No experts are currently available.</p> :
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {experts.map(expert => (
-                                <Card key={expert._id}>
+                                <Card key={expert.id}>
                                     <CardContent className="p-6 text-center">
                                         <Avatar className="h-24 w-24 mx-auto mb-4">
                                             <AvatarImage src={expert.profileImage} />
