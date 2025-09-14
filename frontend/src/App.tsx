@@ -27,6 +27,7 @@ import AIAssistantPage from "./pages/AIAssistantPage";
 import CropDoctorPage from "./pages/CropDoctorPage";
 import ConsultationHistory from "./pages/ConsultationHistory";
 import ExpertsPage from './pages/ExpertsPage';
+import SetExpertRolePage from './pages/SetExpertRole'; // Temporary route for role fix
 
 // Auth Pages
 import Login from "./pages/auth/Login";
@@ -118,6 +119,10 @@ const App = () => (
               <Route path="/farmer/services/offer-tractor" element={<ProtectedRoute><OfferTractorServicePage /></ProtectedRoute>} />
               <Route path="/farmer/services/offer-harvester" element={<ProtectedRoute><OfferHarvesterServicePage /></ProtectedRoute>} />
               <Route path="/buyer/services/offer-supplier" element={<ProtectedRoute><OfferSupplierServicePage /></ProtectedRoute>} />
+
+              {/* --- TEMPORARY ROUTE FOR ROLE FIX --- */}
+              <Route path="/set-expert-role" element={<ProtectedRoute><SetExpertRolePage /></ProtectedRoute>} />
+
               {/* === Catch-all Route for 404 Not Found === */}
               <Route path="*" element={<NotFound />} />
             </Routes>

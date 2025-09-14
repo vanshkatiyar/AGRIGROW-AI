@@ -14,10 +14,9 @@ const protect = async (req, res, next) => {
                 return res.status(401).json({ message: 'Not authorized, invalid token' });
             }
 
-            req.user = await User.findById(decoded.id).select('-password');
-            if (!req.user) {
-                return res.status(401).json({ message: 'Not authorized, user not found' });
-            }
+            // --- FIX: Attach the decoded token payload (id and role) to req.user ---
+            // This is more efficient and avoids issues with stale user data.
+            req.user = decoded;
             next();
         } catch (error) {
             console.error('Token verification failed:', error.message);

@@ -4,8 +4,8 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const { protect } = require('../middleware/authMiddleware');
 
-const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+const generateToken = (id, role) => {
+    return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 
 // @route   POST /api/auth/register
@@ -32,7 +32,7 @@ router.post('/register', async (req, res) => {
 
         if (createdUser) {
             res.status(201).json({
-                token: generateToken(createdUser._id),
+                token: generateToken(createdUser._id, createdUser.role),
                 user: {
                     id: createdUser._id,
                     name: createdUser.name,
@@ -62,7 +62,7 @@ router.post('/login', async (req, res) => {
         const user = await User.findOne({ email });
         if (user && (await user.matchPassword(password))) {
             res.json({
-                token: generateToken(user._id),
+                token: generateToken(user._id, user.role),
                 user: { id: user._id, name: user.name, email: user.email, location: user.location, role: user.role },
             });
         } else {

@@ -134,4 +134,28 @@ router.get('/:id', protect, async (req, res) => {
     }
 });
 
+// --- TEMPORARY ROUTE FOR ROLE FIX ---
+// @route   PUT /api/users/set-expert
+// @desc    Set the current user's role to expert
+// @access  Private
+router.put('/set-expert', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        user.role = 'expert';
+        // --- FIX: Add default expert details to satisfy the schema ---
+        user.expertDetails = {
+            specializations: ['Crop Management'], // Default value
+            experienceYears: 5, // Default value
+        };
+        await user.save();
+        res.json({ message: 'User role updated to expert successfully.', user });
+    } catch (error) {
+        console.error('Error setting expert role:', error);
+        res.status(500).json({ message: 'Server error while updating role.' });
+    }
+});
+
 module.exports = router;
