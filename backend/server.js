@@ -12,9 +12,19 @@ process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
 dotenv.config();
 
 // --- Database Connection ---
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB Connected...'))
-  .catch(err => console.error('MongoDB Connection Error:', err));
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log('MongoDB Connected...');
+  } catch (err) {
+    console.error('MongoDB Connection Error:', err.message);
+    // Exit process with failure
+    process.exit(1);
+  }
+};
+
+// Connect to database
+connectDB();
 
 // --- Mongoose Models and Middleware ---
 // Models are imported in their respective route files

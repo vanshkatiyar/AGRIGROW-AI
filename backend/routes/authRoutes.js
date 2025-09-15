@@ -76,10 +76,19 @@ router.post('/login', async (req, res) => {
             res.status(401).json({ message: 'Invalid email or password' });
         }
     } catch (error) {
-        console.error('Login Error:', error);
-        if (error.message === 'Error comparing passwords') {
+        console.error('--- LOGIN ERROR ---');
+        console.error('Error Message:', error.message);
+        if (error.name === 'CastError') {
+            console.error('CastError: Invalid ID format');
+        } else if (error.name === 'ValidationError') {
+            console.error('Validation Errors:', error.errors);
+        } else if (error.message === 'Error comparing passwords') {
             console.error('Password comparison failed due to technical error');
+        } else if (error.name === 'MongooseError' && error.message.includes('buffering timed out')) {
+            console.error('Mongoose Timeout Error: Database connection issue.');
         }
+        console.error('Error Stack:', error.stack);
+        console.error('-------------------');
         res.status(500).json({ message: 'Server Error during login' });
     }
 });

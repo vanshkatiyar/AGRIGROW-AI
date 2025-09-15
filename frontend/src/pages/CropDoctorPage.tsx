@@ -14,13 +14,15 @@ declare global {
   interface Window {
     puter: {
       ai: {
-        chat: (prompt: string, imageUrl: string, options: { model: string }) => Promise<string>;
+        chat: (prompt: string, imageUrl: string, options: { model: string }) => Promise<string | { success: false; error: { message: string } }>;
       };
     };
   }
 }
 
 // Define types for AI response
+type PuterAIResponse = string | { success: false; error: { message: string } };
+
 type DiagnosisResult = {
   crop: string;
   disease: string;
@@ -137,52 +139,72 @@ const CropDoctorPage = () => {
     setIsLoading(true);
     setError(null);
     
-    try {
-      // Create a blob URL for the image
-      const imageUrl = URL.createObjectURL(selectedFile);
-      
-      // Use Puter AI to analyze the crop image
-      const response = await window.puter.ai.chat(
-        `You are an expert agricultural AI. Analyze this crop image and provide details about the crop and any diseases.
-        Respond ONLY with valid JSON containing these fields:
-        - crop: string (crop name)
-        - disease: string (disease name or 'No disease detected' if healthy)
-        - status: string (either 'healthy' or 'diseased')
-        - confidence: number between 0 and 1
-        - remedy: object with optional fields (cause, chemical, biological, cultural) OR null if healthy
-        
-        Example healthy response:
-        {"crop": "Tomato", "disease": "No disease detected", "status": "healthy", "confidence": 0.95, "remedy": null}
-        
-        Example diseased response:
-        {"crop": "Rice", "disease": "Blast", "status": "diseased", "confidence": 0.88, "remedy": {"cause": "Fungus", "chemical": "Apply fungicide X", "biological": "Use Trichoderma", "cultural": "Remove infected plants"}}`,
-        imageUrl,
-        { model: "gpt-5-nano" }
-      );
+    // Read the selected file as a Data URL (base64 string)
+    const reader = new FileReader();
+    reader.readAsDataURL(selectedFile);
 
-      // Parse the JSON response
-      let result: DiagnosisResult;
+    reader.onloadend = async () => {
       try {
-        result = JSON.parse(response);
-      } catch (err) {
-        throw new Error('Invalid JSON response from AI');
+        const base64Image = reader.result as string;
+
+        // Use Puter AI to analyze the crop image
+        const response = await window.puter.ai.chat(
+          `You are an expert agricultural AI. Analyze this crop image and provide details about the crop and any diseases.
+          Respond ONLY with valid JSON containing these fields:
+          - crop: string (crop name)
+          - disease: string (disease name or 'No disease detected' if healthy)
+          - status: string (either 'healthy' or 'diseased')
+          - confidence: number between 0 and 1
+          - remedy: object with optional fields (cause, chemical, biological, cultural) OR null if healthy
+          
+          Example healthy response:
+          {"crop": "Tomato", "disease": "No disease detected", "status": "healthy", "confidence": 0.95, "remedy": null}
+          
+          Example diseased response:
+          {"crop": "Rice", "disease": "Blast", "status": "diseased", "confidence": 0.88, "remedy": {"cause": "Fungus", "chemical": "Apply fungicide X", "biological": "Use Trichoderma", "cultural": "Remove infected plants"}}`,
+          base64Image, // Pass base64 string instead of blob URL
+          { model: "gpt-5-nano" }
+        );
+
+        // Check if the response is an error object from Puter.js
+        if (typeof response === 'object' && response !== null && 'success' in response && !response.success) {
+          const errorMessage = (response as any).error?.message || 'Unknown AI analysis error.';
+          throw new Error(errorMessage);
+        }
+
+        // Parse the JSON response
+        let result: DiagnosisResult;
+        try {
+          result = JSON.parse(response as string);
+        } catch (err) {
+          throw new Error('Invalid JSON response from AI');
+        }
+        
+        // Validate response structure
+        if (!result.crop || !result.disease || !result.status || typeof result.confidence !== 'number') {
+          throw new Error('Invalid response structure from AI');
+        }
+        
+        setAnalysisResult(result);
+      } catch (err: any) {
+        console.error('AI analysis error:', err);
+        let errorMessage = 'Failed to analyze image. Please try again.';
+        if (typeof err === 'object' && err !== null && 'success' in err && !err.success && err.error && err.error.message) {
+          errorMessage = err.error.message;
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        setError(errorMessage);
+      } finally {
+        setIsLoading(false);
       }
-      
-      // Validate response structure
-      if (!result.crop || !result.disease || !result.status || typeof result.confidence !== 'number') {
-        throw new Error('Invalid response structure from AI');
-      }
-      
-      setAnalysisResult(result);
-      
-      // Clean up the blob URL
-      URL.revokeObjectURL(imageUrl);
-    } catch (err) {
-      console.error('AI analysis error:', err);
-      setError('Failed to analyze image. Please try again.');
-    } finally {
+    };
+
+    reader.onerror = (err) => {
+      console.error('File reader error:', err);
+      setError('Failed to read image file.');
       setIsLoading(false);
-    }
+    };
   };
 
   return (
