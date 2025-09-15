@@ -33,7 +33,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const newSocket = io(import.meta.env.VITE_API_BASE_URL || 'http://VITE_API_BASE_URL', {
+      const newSocket = io(import.meta.env.VITE_API_BASE_URL, {
         auth: { token },
         transports: ['websocket', 'polling']
       });
