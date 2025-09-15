@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { AuthBrandingPanel } from '@/components/common/AuthBrandingPanel';
+import { FullScreenLoader } from '@/components/common/FullScreenLoader';
 
 interface LoginForm {
   email: string;
@@ -49,6 +50,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex">
+      {isLoading && <FullScreenLoader />}
       <AuthBrandingPanel />
 
       {/* Right Side - Form */}

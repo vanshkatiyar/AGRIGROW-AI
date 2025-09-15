@@ -60,16 +60,26 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     try {
         const user = await User.findOne({ email });
-        if (user && (await user.matchPassword(password))) {
+        if (!user) {
+            console.log(`Login attempt for non-existent email: ${email}`);
+            return res.status(401).json({ message: 'Invalid email or password' });
+        }
+
+        const passwordMatch = await user.matchPassword(password);
+        if (passwordMatch) {
             res.json({
                 token: generateToken(user._id, user.role),
                 user: { id: user._id, name: user.name, email: user.email, location: user.location, role: user.role },
             });
         } else {
+            console.log(`Invalid password for user: ${email}`);
             res.status(401).json({ message: 'Invalid email or password' });
         }
     } catch (error) {
         console.error('Login Error:', error);
+        if (error.message === 'Error comparing passwords') {
+            console.error('Password comparison failed due to technical error');
+        }
         res.status(500).json({ message: 'Server Error during login' });
     }
 });

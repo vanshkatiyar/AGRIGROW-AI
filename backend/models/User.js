@@ -55,7 +55,12 @@ userSchema.pre('save', async function (next) {
 });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
-    return await bcrypt.compare(enteredPassword, this.password);
+    try {
+        return await bcrypt.compare(enteredPassword, this.password);
+    } catch (error) {
+        console.error('Password comparison error:', error);
+        throw new Error('Error comparing passwords');
+    }
 };
 
 // Messaging-related methods

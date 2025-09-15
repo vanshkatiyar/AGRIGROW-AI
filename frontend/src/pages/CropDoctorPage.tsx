@@ -1,15 +1,38 @@
 // frontend/src/pages/CropDoctorPage.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useMutation } from '@tanstack/react-query';
-import { diagnoseCrop, DiagnosisResult } from '@/services/cropDoctorService';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Stethoscope, UploadCloud, XCircle, Droplets, Leaf, ShieldCheck, AlertTriangle, Sprout, Bug } from 'lucide-react';
+import { Stethoscope, UploadCloud, XCircle, Leaf, ShieldCheck, AlertTriangle, Sprout, Bug } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Declare Puter.js types
+declare global {
+  interface Window {
+    puter: {
+      ai: {
+        chat: (prompt: string, imageUrl: string, options: { model: string }) => Promise<string>;
+      };
+    };
+  }
+}
+
+// Define types for AI response
+type DiagnosisResult = {
+  crop: string;
+  disease: string;
+  status: 'healthy' | 'diseased';
+  confidence: number;
+  remedy: {
+    cause?: string;
+    chemical?: string;
+    biological?: string;
+    cultural?: string;
+  } | null;
+};
 
 // Result Card Component to display the diagnosis
 const ResultCard: React.FC<{ data: DiagnosisResult }> = ({ data }) => {
@@ -62,26 +85,103 @@ const ResultCard: React.FC<{ data: DiagnosisResult }> = ({ data }) => {
 
 
 const CropDoctorPage = () => {
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<DiagnosisResult | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [puterLoaded, setPuterLoaded] = useState(false);
 
-  const mutation = useMutation<DiagnosisResult, Error, File>({
-    mutationFn: diagnoseCrop,
-  });
+  // Load Puter.js script dynamically
+  useEffect(() => {
+    if (typeof window.puter === 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://js.puter.com/v2/';
+      script.async = true;
+      script.onload = () => setPuterLoaded(true);
+      script.onerror = () => setError('Failed to load Puter.js');
+      document.head.appendChild(script);
+    } else {
+      setPuterLoaded(true);
+    }
+  }, []);
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const file = event.target.files?.[0] || null;
+    setSelectedFile(file);
+    setAnalysisResult(null);
+    setError(null);
+
     if (file) {
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-      mutation.reset();
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview(null);
     }
   };
-  
-  const handleDiagnose = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (imageFile) {
-      mutation.mutate(imageFile);
+
+  const handleAnalyze = async () => {
+    if (!selectedFile) {
+      setError('Please select an image file.');
+      return;
+    }
+
+    if (!puterLoaded) {
+      setError('AI engine is still loading. Please try again in a moment.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Create a blob URL for the image
+      const imageUrl = URL.createObjectURL(selectedFile);
+      
+      // Use Puter AI to analyze the crop image
+      const response = await window.puter.ai.chat(
+        `You are an expert agricultural AI. Analyze this crop image and provide details about the crop and any diseases.
+        Respond ONLY with valid JSON containing these fields:
+        - crop: string (crop name)
+        - disease: string (disease name or 'No disease detected' if healthy)
+        - status: string (either 'healthy' or 'diseased')
+        - confidence: number between 0 and 1
+        - remedy: object with optional fields (cause, chemical, biological, cultural) OR null if healthy
+        
+        Example healthy response:
+        {"crop": "Tomato", "disease": "No disease detected", "status": "healthy", "confidence": 0.95, "remedy": null}
+        
+        Example diseased response:
+        {"crop": "Rice", "disease": "Blast", "status": "diseased", "confidence": 0.88, "remedy": {"cause": "Fungus", "chemical": "Apply fungicide X", "biological": "Use Trichoderma", "cultural": "Remove infected plants"}}`,
+        imageUrl,
+        { model: "gpt-5-nano" }
+      );
+
+      // Parse the JSON response
+      let result: DiagnosisResult;
+      try {
+        result = JSON.parse(response);
+      } catch (err) {
+        throw new Error('Invalid JSON response from AI');
+      }
+      
+      // Validate response structure
+      if (!result.crop || !result.disease || !result.status || typeof result.confidence !== 'number') {
+        throw new Error('Invalid response structure from AI');
+      }
+      
+      setAnalysisResult(result);
+      
+      // Clean up the blob URL
+      URL.revokeObjectURL(imageUrl);
+    } catch (err) {
+      console.error('AI analysis error:', err);
+      setError('Failed to analyze image. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -96,11 +196,11 @@ const CropDoctorPage = () => {
 
         <Card>
           <CardContent className="p-4">
-            <form onSubmit={handleDiagnose} className="space-y-4">
+            <div className="space-y-4">
               {imagePreview ? (
                 <div className="relative">
                   <img src={imagePreview} alt="Crop preview" className="rounded-lg w-full max-h-72 object-contain border bg-muted/20" />
-                  <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => { setImageFile(null); setImagePreview(null); mutation.reset(); }}>
+                  <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => { setSelectedFile(null); setImagePreview(null); setAnalysisResult(null); }}>
                     <XCircle className="h-4 w-4" />
                   </Button>
                 </div>
@@ -114,16 +214,16 @@ const CropDoctorPage = () => {
                   <input id="image-upload" type="file" className="hidden" accept="image/png, image/jpeg" onChange={handleImageChange} />
                 </label>
               )}
-              <Button type="submit" className="w-full" disabled={!imageFile || mutation.isPending}>
-                {mutation.isPending ? <LoadingSpinner className="mr-2 h-4 w-4" /> : <Stethoscope className="mr-2 h-4 w-4" />}
-                {mutation.isPending ? 'Analyzing Image...' : 'Diagnose Crop'}
+              <Button onClick={handleAnalyze} className="w-full" disabled={!selectedFile || isLoading}>
+                {isLoading ? <LoadingSpinner className="mr-2 h-4 w-4" /> : <Stethoscope className="mr-2 h-4 w-4" />}
+                {isLoading ? 'Analyzing Image...' : 'Diagnose Crop'}
               </Button>
-            </form>
+            </div>
           </CardContent>
         </Card>
 
-        {mutation.isError && (<Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{mutation.error.message}</AlertDescription></Alert>)}
-        {mutation.isSuccess && <ResultCard data={mutation.data} />}
+        {error && (<Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>)}
+        {analysisResult && <ResultCard data={analysisResult} />}
       </div>
     </Layout>
   );
