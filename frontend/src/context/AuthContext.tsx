@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import axios from 'axios';
+import api from '@/api/axios';
 import { User } from '@/types';
 import { useToast } from '@/hooks/use-toast'; // Import useToast
 
@@ -35,15 +35,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const validateToken = async () => {
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('token');
       if (token) {
         try {
-          const response = await axios.get('http://VITE_API_BASE_URL/api/auth/me', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          const response = await api.get('/auth/me');
           setUser(response.data.user);
         } catch (error) {
-          localStorage.removeItem('authToken');
+          localStorage.removeItem('token');
           setUser(null);
         }
       }
@@ -55,9 +53,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<User> => {
     setIsLoading(true);
     try {
-      const response = await axios.post('http://VITE_API_BASE_URL/api/auth/login', { email, password });
+      const response = await api.post('/auth/login', { email, password });
       const { token, user: userData } = response.data;
-      localStorage.setItem('authToken', token);
+      localStorage.setItem('token', token);
       setUser(userData);
       setIsLoading(false);
       // --- CHANGE: Return the user data ---
@@ -70,7 +68,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('token');
     setUser(null);
     // Redirect to login page after logout
     window.location.href = '/auth/login';
@@ -79,9 +77,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (userData: any) => {
     setIsLoading(true);
     try {
-      const response = await axios.post('http://VITE_API_BASE_URL/api/auth/register', userData);
+      const response = await api.post('/auth/register', userData);
       const { token, user: userDataResponse } = response.data;
-      localStorage.setItem('authToken', token);
+      localStorage.setItem('token', token);
       setUser(userDataResponse);
       setIsLoading(false);
     } catch (error) {
@@ -93,12 +91,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const updateUserRole = async (userId: string, role: 'farmer' | 'buyer' | 'expert' | 'serviceProvider') => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await axios.put(
-        `http://VITE_API_BASE_URL/api/users/${userId}/role`,
-        { role },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.put(`/users/${userId}/role`, { role });
       setUser(response.data);
       toast({
         title: "Role Updated",

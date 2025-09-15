@@ -23,7 +23,7 @@ mongoose.connect(process.env.MONGO_URI)
 // --- Express App Setup ---
 const app = express();
 app.use(cors({
-    origin: ["http://localhost:8080", "https://agrigrow-ai.vercel.app", "https://agrigrow-ai.onrender.com"],
+    origin: ["http://127.0.0.1:5002", "http://127.0.0.1:3000", "http://localhost:3000", "http://localhost:5173", "http://localhost:8080", "https://agrigrow-ai.vercel.app", "https://agrigrow-ai.onrender.com"],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"]
@@ -89,13 +89,28 @@ app.get('/', (req, res) => {
         }
     });
 });
+// --- Global Error Handling ---
+app.use((req, res, next) => {
+    const error = new Error(`Not Found - ${req.originalUrl}`);
+    res.status(404);
+    next(error);
+});
+
+app.use((error, req, res, next) => {
+    const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+    res.status(statusCode);
+    res.json({
+        message: error.message,
+        stack: process.env.NODE_ENV === 'production' ? '🥞' : error.stack,
+    });
+});
 
 
 // --- Server and Socket.IO Setup ---
 const server = http.createServer(app);
 const io = new Server(server, { 
     cors: { 
-        origin: ["http://localhost:8080", "https://agrigrow-ai.vercel.app", "https://agrigrow-ai.onrender.com"],
+        origin: ["http://127.0.0.1:5002", "http://127.0.0.1:3000", "http://localhost:5173", "http://localhost:8080", "https://agrigrow-ai.vercel.app", "https://agrigrow-ai.onrender.com"],
         methods: ["GET", "POST"],
         credentials: true
     }
@@ -208,7 +223,7 @@ io.on('connection', async (socket) => {
 });
 
 // --- Start Server ---
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5002;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
