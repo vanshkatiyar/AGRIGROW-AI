@@ -46,7 +46,7 @@ const FarmerDashboard = () => {
             const cropData = {
                 name: data.name,
                 areaInAcres: data.areaInAcres,
-                plantingDate: data.plantingDate.toISOString(),
+                plantingDate: data.plantingDate,
                 expectedYield: data.expectedYield,
                 estimatedRevenue: data.estimatedRevenue,
             };
@@ -158,6 +158,12 @@ const FarmerDashboard = () => {
                                 <Link to="/services/manufacturer">
                                     <Package className="h-6 w-6" />
                                     <span className="text-sm">Manufacturers</span>
+                                </Link>
+                            </Button>
+                            <Button asChild variant="outline" className="h-20 flex-col space-y-2">
+                                <Link to="/interactive-map">
+                                    <Package className="h-6 w-6" /> {/* Using Package icon for now, can be changed */}
+                                    <span className="text-sm">Interactive Map</span>
                                 </Link>
                             </Button>
                         </div>

@@ -1,4 +1,4 @@
-import { Home, Users, ShoppingBag, CloudSun, TrendingUp, Sparkles, Wallet, Stethoscope, History, Wrench } from 'lucide-react';
+import { Home, Users, ShoppingBag, CloudSun, TrendingUp, Sparkles, Wallet, Stethoscope, History, Wrench, Map } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -10,6 +10,7 @@ const baseNavigation = [
   { name: 'Feed', href: '/feed', icon: Users },
   { name: 'Market Prices', href: '/market-prices', icon: TrendingUp },
   { name: 'Weather', href: '/weather', icon: CloudSun },
+  { name: 'Interactive Map', href: '/interactive-map', icon: Map },
 ];
 const marketplaceNav = { name: 'Marketplace', href: '/marketplace', icon: ShoppingBag };
 const farmerExpenseNav = { name: 'Farm Finances', href: '/farmer-expenses', icon: Wallet };

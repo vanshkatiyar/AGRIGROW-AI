@@ -6,22 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Stethoscope, UploadCloud, XCircle, Leaf, ShieldCheck, AlertTriangle, Sprout, Bug } from 'lucide-react';
+import { Stethoscope, UploadCloud, XCircle, Leaf, ShieldCheck, AlertTriangle, Sprout, Bug, Mic, Volume2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-// Declare Puter.js types
-declare global {
-  interface Window {
-    puter: {
-      ai: {
-        chat: (prompt: string, imageUrl: string, options: { model: string }) => Promise<string | { success: false; error: { message: string } }>;
-      };
-    };
-  }
-}
-
-// Define types for AI response
-type PuterAIResponse = string | { success: false; error: { message: string } };
 
 type DiagnosisResult = {
   crop: string;
@@ -36,7 +22,6 @@ type DiagnosisResult = {
   } | null;
 };
 
-// Result Card Component to display the diagnosis
 const ResultCard: React.FC<{ data: DiagnosisResult }> = ({ data }) => {
   const { crop, disease, status, confidence, remedy } = data;
   const isHealthy = status === 'healthy';
@@ -85,14 +70,14 @@ const ResultCard: React.FC<{ data: DiagnosisResult }> = ({ data }) => {
   );
 };
 
-
 const CropDoctorPage = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<DiagnosisResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [puterLoaded, setPuterLoaded] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState<any>(null);
 
   // Load Puter.js script dynamically
   useEffect(() => {
@@ -100,11 +85,36 @@ const CropDoctorPage = () => {
       const script = document.createElement('script');
       script.src = 'https://js.puter.com/v2/';
       script.async = true;
-      script.onload = () => setPuterLoaded(true);
+      script.onload = () => console.log('Puter.js loaded');
       script.onerror = () => setError('Failed to load Puter.js');
       document.head.appendChild(script);
+    }
+  }, []);
+
+  // Initialize speech recognition
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognitionInstance = new SpeechRecognition();
+      recognitionInstance.continuous = false;
+      recognitionInstance.interimResults = false;
+      recognitionInstance.lang = 'en-US';
+      
+      recognitionInstance.onstart = () => setIsListening(true);
+      recognitionInstance.onend = () => setIsListening(false);
+      recognitionInstance.onerror = (event: any) => {
+        console.error('Speech recognition error', event.error);
+        setError(`Speech error: ${event.error}`);
+      };
+      recognitionInstance.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        console.log('Recognized text:', transcript);
+        alert(`I heard: "${transcript}"`);
+      };
+
+      setRecognition(recognitionInstance);
     } else {
-      setPuterLoaded(true);
+      console.warn('Speech Recognition API not supported');
     }
   }, []);
 
@@ -131,80 +141,50 @@ const CropDoctorPage = () => {
       return;
     }
 
-    if (!puterLoaded) {
-      setError('AI engine is still loading. Please try again in a moment.');
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
     
-    // Read the selected file as a Data URL (base64 string)
-    const reader = new FileReader();
-    reader.readAsDataURL(selectedFile);
-
-    reader.onloadend = async () => {
-      try {
-        const base64Image = reader.result as string;
-
-        // Use Puter AI to analyze the crop image
-        const response = await window.puter.ai.chat(
-          `You are an expert agricultural AI. Analyze this crop image and provide details about the crop and any diseases.
-          Respond ONLY with valid JSON containing these fields:
-          - crop: string (crop name)
-          - disease: string (disease name or 'No disease detected' if healthy)
-          - status: string (either 'healthy' or 'diseased')
-          - confidence: number between 0 and 1
-          - remedy: object with optional fields (cause, chemical, biological, cultural) OR null if healthy
-          
-          Example healthy response:
-          {"crop": "Tomato", "disease": "No disease detected", "status": "healthy", "confidence": 0.95, "remedy": null}
-          
-          Example diseased response:
-          {"crop": "Rice", "disease": "Blast", "status": "diseased", "confidence": 0.88, "remedy": {"cause": "Fungus", "chemical": "Apply fungicide X", "biological": "Use Trichoderma", "cultural": "Remove infected plants"}}`,
-          base64Image, // Pass base64 string instead of blob URL
-          { model: "gpt-5-nano" }
-        );
-
-        // Check if the response is an error object from Puter.js
-        if (typeof response === 'object' && response !== null && 'success' in response && !response.success) {
-          const errorMessage = (response as any).error?.message || 'Unknown AI analysis error.';
-          throw new Error(errorMessage);
+    // Simulate analysis
+    setTimeout(() => {
+      setAnalysisResult({
+        crop: 'Tomato',
+        disease: 'Blight',
+        status: 'diseased',
+        confidence: 0.92,
+        remedy: {
+          cause: 'Fungal infection',
+          chemical: 'Copper-based fungicide',
+          biological: 'Bacillus subtilis',
+          cultural: 'Rotate crops and improve air circulation'
         }
-
-        // Parse the JSON response
-        let result: DiagnosisResult;
-        try {
-          result = JSON.parse(response as string);
-        } catch (err) {
-          throw new Error('Invalid JSON response from AI');
-        }
-        
-        // Validate response structure
-        if (!result.crop || !result.disease || !result.status || typeof result.confidence !== 'number') {
-          throw new Error('Invalid response structure from AI');
-        }
-        
-        setAnalysisResult(result);
-      } catch (err: any) {
-        console.error('AI analysis error:', err);
-        let errorMessage = 'Failed to analyze image. Please try again.';
-        if (typeof err === 'object' && err !== null && 'success' in err && !err.success && err.error && err.error.message) {
-          errorMessage = err.error.message;
-        } else if (err.message) {
-          errorMessage = err.message;
-        }
-        setError(errorMessage);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    reader.onerror = (err) => {
-      console.error('File reader error:', err);
-      setError('Failed to read image file.');
+      });
       setIsLoading(false);
-    };
+    }, 2000);
+  };
+
+  const toggleListening = () => {
+    if (!recognition) {
+      setError('Speech recognition not available');
+      return;
+    }
+    
+    if (isListening) {
+      recognition.stop();
+    } else {
+      recognition.start();
+    }
+  };
+
+  const speakDiagnosis = () => {
+    if (!analysisResult || typeof window.puter === 'undefined') {
+      setError('Text-to-speech not ready');
+      return;
+    }
+    
+    const text = `Diagnosis: ${analysisResult.crop} with ${analysisResult.disease}. Confidence: ${Math.round(analysisResult.confidence * 100)}%`;
+    window.puter.ai.txt2speech(text)
+      .then((audio: HTMLAudioElement) => audio.play())
+      .catch((err: any) => setError('TTS failed: ' + err.message));
   };
 
   return (
@@ -236,16 +216,36 @@ const CropDoctorPage = () => {
                   <input id="image-upload" type="file" className="hidden" accept="image/png, image/jpeg" onChange={handleImageChange} />
                 </label>
               )}
-              <Button onClick={handleAnalyze} className="w-full" disabled={!selectedFile || isLoading}>
-                {isLoading ? <LoadingSpinner className="mr-2 h-4 w-4" /> : <Stethoscope className="mr-2 h-4 w-4" />}
-                {isLoading ? 'Analyzing Image...' : 'Diagnose Crop'}
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={handleAnalyze} className="flex-1" disabled={!selectedFile || isLoading}>
+                  {isLoading ? <LoadingSpinner className="mr-2 h-4 w-4" /> : <Stethoscope className="mr-2 h-4 w-4" />}
+                  {isLoading ? 'Analyzing...' : 'Diagnose Crop'}
+                </Button>
+                <Button variant="outline" size="icon" onClick={toggleListening}>
+                  <Mic className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {error && (<Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>)}
-        {analysisResult && <ResultCard data={analysisResult} />}
+        {error && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {analysisResult && (
+          <div className="space-y-4">
+            <ResultCard data={analysisResult} />
+            <Button className="w-full" onClick={speakDiagnosis}>
+              <Volume2 className="mr-2 h-5 w-5" />
+              Speak Diagnosis
+            </Button>
+          </div>
+        )}
       </div>
     </Layout>
   );

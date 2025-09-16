@@ -9,8 +9,10 @@ import {
   Bot, 
   Send, 
   Mic, 
-  MicOff, 
-  Loader2, 
+  MicOff,
+  Loader2,
+  Volume2,
+  VolumeX,
   Tractor,
   Truck,
   Package,
@@ -23,6 +25,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { askAIAssistant } from '@/services/aiService';
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 
 interface Message {
   id: string;
@@ -63,39 +66,20 @@ const FarmerAIBot: React.FC = () => {
   
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isListening, setIsListening] = useState(false);
+  const {
+    transcript,
+    listening,
+    resetTranscript,
+    browserSupportsSpeechRecognition
+  } = useSpeechRecognition();
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [activeAudio, setActiveAudio] = useState<HTMLAudioElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const recognition = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  useEffect(() => {
-    // Initialize speech recognition if available
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognition.current = new SpeechRecognition();
-      recognition.current.continuous = false;
-      recognition.current.interimResults = false;
-      recognition.current.lang = 'en-US';
-
-      recognition.current.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setInputMessage(transcript);
-        setIsListening(false);
-      };
-
-      recognition.current.onerror = () => {
-        setIsListening(false);
-        toast.error('Speech recognition error');
-      };
-
-      recognition.current.onend = () => {
-        setIsListening(false);
-      };
-    }
-  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -144,18 +128,42 @@ const FarmerAIBot: React.FC = () => {
   };
 
 
+  useEffect(() => {
+    setInputMessage(transcript);
+  }, [transcript]);
+
   const handleVoiceInput = () => {
-    if (!recognition.current) {
-      toast.error('Speech recognition not supported');
+    if (!browserSupportsSpeechRecognition) {
+      toast.error("Your browser doesn't support speech recognition.");
       return;
     }
-
-    if (isListening) {
-      recognition.current.stop();
-      setIsListening(false);
+    if (listening) {
+      SpeechRecognition.stopListening();
     } else {
-      recognition.current.start();
-      setIsListening(true);
+      resetTranscript();
+      SpeechRecognition.startListening({ continuous: true });
+    }
+  };
+
+  const handlePlayAudio = async (text: string) => {
+    if (window.puter && window.puter.ai && typeof (window.puter.ai as any).txt2speech === 'function') {
+      try {
+        setIsSpeaking(true);
+        const audio = await (window.puter.ai as any).txt2speech(text, {
+          voice: "Joanna",
+          engine: "neural",
+          language: "en-US"
+        });
+        audio.play();
+        audio.onended = () => {
+          setIsSpeaking(false);
+        };
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to play audio.');
+        setIsSpeaking(false);
+      }
+    } else {
+      toast.error('Text-to-speech function is not available.');
     }
   };
 
@@ -238,6 +246,17 @@ const FarmerAIBot: React.FC = () => {
                         : 'bg-gray-100 text-gray-900'
                     }`}>
                       <p className="text-sm whitespace-pre-line">{message.content}</p>
+                      {message.type === 'bot' && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handlePlayAudio(message.content)}
+                          className="mt-2"
+                          disabled={isSpeaking}
+                        >
+                          {isSpeaking ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                        </Button>
+                      )}
                     </div>
                     
                     {message.serviceRecommendations && message.serviceRecommendations.length > 0 && (
@@ -305,9 +324,9 @@ const FarmerAIBot: React.FC = () => {
               variant="outline"
               size="icon"
               onClick={handleVoiceInput}
-              className={isListening ? 'bg-red-100 text-red-600' : ''}
+              className={listening ? 'bg-red-100 text-red-600' : ''}
             >
-              {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
             </Button>
             
             <Button onClick={() => handleSendMessage()} disabled={!inputMessage.trim() || isLoading}>

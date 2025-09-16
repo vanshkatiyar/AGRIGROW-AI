@@ -27,6 +27,7 @@ import AIAssistantPage from "./pages/AIAssistantPage";
 import CropDoctorPage from "./pages/CropDoctorPage";
 import ConsultationHistory from "./pages/ConsultationHistory";
 import ExpertsPage from './pages/ExpertsPage';
+import InteractiveMapPage from './pages/InteractiveMapPage';
 import SetExpertRolePage from './pages/SetExpertRole'; // Temporary route for role fix
 
 // Auth Pages
@@ -95,6 +96,7 @@ const App = () => (
               <Route path="/market-prices" element={<ProtectedRoute><MarketPrices /></ProtectedRoute>} />
               <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistantPage /></ProtectedRoute>} />
               <Route path="/crop-doctor" element={<ProtectedRoute><CropDoctorPage /></ProtectedRoute>} />
+              <Route path="/interactive-map" element={<ProtectedRoute><InteractiveMapPage /></ProtectedRoute>} />
               
               {/* Expense Trackers */}
               <Route path="/farmer-expenses" element={<ProtectedRoute><FarmerExpenseTracker /></ProtectedRoute>} />

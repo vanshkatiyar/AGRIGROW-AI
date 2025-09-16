@@ -60,7 +60,7 @@ export interface Crop {
 export interface AddCropData {
   name: string;
   areaInAcres: number;
-  plantingDate: string;
+  plantingDate: Date;
   expectedYield: string;
   estimatedRevenue: number;
 }

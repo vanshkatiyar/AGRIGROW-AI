@@ -25,6 +25,7 @@ const aiRoutes = require('./routes/aiRoutes');
 const cropDoctorRoutes = require('./routes/cropDoctorRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const pushRoutes = require('./routes/pushRoutes');
+import mapRoutes from './routes/mapRoutes';
 
 const app = express();
 const httpServer = createServer(app);
@@ -56,6 +57,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/crop-doctor', cropDoctorRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/push', pushRoutes);
+app.use('/api/map', mapRoutes);
 
 // socket auth
 io.use(async (socket, next) => {
@@ -108,6 +110,32 @@ io.on('connection', socket => {
   });
 
   socket.on('disconnect', () => {});
+
+  // Map-related socket events
+  socket.on('provider_location_update', async ({ providerId, lat, lng }) => {
+    // In a real application, save to DB and broadcast to relevant farmers
+    console.log(`Provider ${providerId} updated location: ${lat}, ${lng}`);
+    // For now, we'll just log and potentially broadcast to all connected users for testing
+    io.emit('receive_provider_location', { providerId, lat, lng });
+  });
+
+  socket.on('farmer_location_share', async ({ farmerId, providerId, lat, lng }) => {
+    // In a real application, save to DB and broadcast to the specific provider
+    console.log(`Farmer ${farmerId} sharing location with ${providerId}: ${lat}, ${lng}`);
+    io.to(providerId).emit('receive_farmer_location', { farmerId, lat, lng });
+  });
+
+  socket.on('service_accepted', ({ serviceId, providerId, farmerId }) => {
+    console.log(`Service ${serviceId} accepted by ${providerId} for ${farmerId}`);
+    io.to(farmerId).emit('service_status_update', { serviceId, status: 'accepted', providerId });
+    io.to(providerId).emit('service_status_update', { serviceId, status: 'accepted', farmerId });
+  });
+
+  socket.on('service_completed', ({ serviceId, providerId, farmerId }) => {
+    console.log(`Service ${serviceId} completed by ${providerId} for ${farmerId}`);
+    io.to(farmerId).emit('service_status_update', { serviceId, status: 'completed', providerId });
+    io.to(providerId).emit('service_status_update', { serviceId, status: 'completed', farmerId });
+  });
 });
 
 const PORT = process.env.PORT || 5000;
