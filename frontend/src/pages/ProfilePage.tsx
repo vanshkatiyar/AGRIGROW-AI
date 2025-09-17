@@ -45,9 +45,88 @@ const ProfilePage = () => {
 
     const renderRoleSpecificCard = () => {
         switch (profileData.role) {
-            case 'farmer': return <Card><CardHeader><CardTitle className="flex items-center gap-2"><Sprout/>Farm Details</CardTitle></CardHeader><CardContent><p>Crops: Wheat, Rice</p></CardContent></Card>;
-            case 'buyer': return <Card><CardHeader><CardTitle className="flex items-center gap-2"><ShoppingCart/>Business Info</CardTitle></CardHeader><CardContent><p>Company: Arjun Traders</p></CardContent></Card>;
-            case 'expert': return <Card><CardHeader><CardTitle className="flex items-center gap-2"><GraduationCap/>Expertise</CardTitle></CardHeader><CardContent><p>Specialization: Crop Diseases</p></CardContent></Card>;
+            case 'farmer':
+                return (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><Sprout/>Farm Details</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            {profileData.crops && profileData.crops.length > 0 ? (
+                                <div>
+                                    <h4 className="font-semibold">Crops:</h4>
+                                    <ul className="list-disc pl-5">
+                                        {profileData.crops.map((crop: any) => (
+                                            <li key={crop._id}>{crop.name} ({crop.areaInAcres} acres)</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ) : (
+                                <p>No crops listed yet.</p>
+                            )}
+                            {/* Add more farmer-specific details here */}
+                        </CardContent>
+                    </Card>
+                );
+            case 'buyer':
+                return (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><ShoppingCart/>Business Info</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            <p><span className="font-semibold">Company:</span> {profileData.companyName || 'N/A'}</p>
+                            <p><span className="font-semibold">Interests:</span> {profileData.buyingInterests?.join(', ') || 'N/A'}</p>
+                            {/* Add more buyer-specific details here */}
+                        </CardContent>
+                    </Card>
+                );
+            case 'expert':
+                return (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><GraduationCap/>Expertise</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            <p><span className="font-semibold">Specialization:</span> {profileData.specialization || 'N/A'}</p>
+                            <p><span className="font-semibold">Experience:</span> {profileData.experience || 'N/A'} years</p>
+                            {profileData.articles && profileData.articles.length > 0 && (
+                                <div>
+                                    <h4 className="font-semibold">Recent Articles:</h4>
+                                    <ul className="list-disc pl-5">
+                                        {profileData.articles.map((article: any) => (
+                                            <li key={article._id}>{article.title}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                            {/* Add more expert-specific details here */}
+                        </CardContent>
+                    </Card>
+                );
+            case 'serviceProvider':
+                return (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><Briefcase/>Service Details</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            <p><span className="font-semibold">Business Name:</span> {profileData.serviceProviderProfile?.businessName || 'N/A'}</p>
+                            <p><span className="font-semibold">Service Type:</span> {profileData.serviceProviderProfile?.serviceType || 'N/A'}</p>
+                            {profileData.services && profileData.services.length > 0 && (
+                                <div>
+                                    <h4 className="font-semibold">Offered Services:</h4>
+                                    <ul className="list-disc pl-5">
+                                        {profileData.services.map((service: any) => (
+                                            <li key={service._id}>{service.name}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                            {/* Add more serviceProvider-specific details here */}
+                        </CardContent>
+                    </Card>
+                );
             default: return null;
         }
     };
@@ -56,9 +135,9 @@ const ProfilePage = () => {
         <Layout>
             <div className="container mx-auto p-4 sm:p-6 space-y-6">
                 <Card className="overflow-hidden">
-                    <div className="h-48 bg-cover bg-center relative" style={{ backgroundImage: `url(${profileData.coverPhoto})` }}>
+                    <div className="h-48 bg-cover bg-center relative" style={{ backgroundImage: `url(${profileData.coverPhoto || '/path/to/default-cover.jpg'})` }}>
                         <Avatar className="h-32 w-32 border-4 border-card absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
-                            <AvatarImage src={profileData.profileImage} />
+                            <AvatarImage src={profileData.profileImage || '/path/to/default-avatar.jpg'} />
                             <AvatarFallback className="text-4xl">{profileData.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                     </div>
@@ -85,18 +164,48 @@ const ProfilePage = () => {
                 <div className="grid md:grid-cols-3 gap-6">
                     <div className="md:col-span-1 space-y-6">
                         <Card><CardHeader><CardTitle>About</CardTitle></CardHeader><CardContent className="space-y-3 text-sm">
-                            <div className="flex items-center gap-3"><MapPin className="h-4 w-4 text-muted-foreground" /> <span>{profileData.location}</span></div>
+                            <div className="flex items-center gap-3"><MapPin className="h-4 w-4 text-muted-foreground" /> <span>{profileData.location || 'Not specified'}</span></div>
                             <div className="flex items-center gap-3"><Mail className="h-4 w-4 text-muted-foreground" /> <span>{profileData.email}</span></div>
-                            <div className="flex items-center gap-3"><Briefcase className="h-4 w-4 text-muted-foreground" /> <span>Joined {format(new Date(profileData.createdAt), 'MMMM yyyy')}</span></div>
+                            <div className="flex items-center gap-3"><Briefcase className="h-4 w-4 text-muted-foreground" /> <span>Joined {profileData.createdAt ? format(new Date(profileData.createdAt), 'MMMM yyyy') : 'N/A'}</span></div>
                         </CardContent></Card>
                         <Card><CardHeader><CardTitle>Stats</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">
-                            <div className="flex justify-between"><span>Followers</span><span className="font-bold">150</span></div>
-                            <div className="flex justify-between"><span>Following</span><span className="font-bold">82</span></div>
-                            <div className="flex justify-between"><span>Crops Listed</span><span className="font-bold">12</span></div>
+                            <div className="flex justify-between"><span>Followers</span><span className="font-bold">{(profileData.followers && profileData.followers.length) || 0}</span></div>
+                            <div className="flex justify-between"><span>Following</span><span className="font-bold">{(profileData.following && profileData.following.length) || 0}</span></div>
+                            {profileData.role === 'farmer' && <div className="flex justify-between"><span>Crops Listed</span><span className="font-bold">{(profileData.crops && profileData.crops.length) || 0}</span></div>}
+                            {profileData.role === 'expert' && <div className="flex justify-between"><span>Articles Published</span><span className="font-bold">{(profileData.articles && profileData.articles.length) || 0}</span></div>}
+                            {profileData.role === 'serviceProvider' && <div className="flex justify-between"><span>Services Offered</span><span className="font-bold">{(profileData.services && profileData.services.length) || 0}</span></div>}
+                            {profileData.role === 'buyer' && <div className="flex justify-between"><span>Products Purchased</span><span className="font-bold">{(profileData.products && profileData.products.length) || 0}</span></div>}
                         </CardContent></Card>
                     </div>
                     <div className="md:col-span-2">
                         {renderRoleSpecificCard()}
+                        {profileData.posts && profileData.posts.length > 0 && (
+                            <Card className="mt-6">
+                                <CardHeader><CardTitle>Recent Posts</CardTitle></CardHeader>
+                                <CardContent>
+                                    {/* Render a list of recent posts */}
+                                    <p>Displaying {profileData.posts.length} posts.</p>
+                                </CardContent>
+                            </Card>
+                        )}
+                        {profileData.services && profileData.services.length > 0 && (
+                            <Card className="mt-6">
+                                <CardHeader><CardTitle>Services Offered</CardTitle></CardHeader>
+                                <CardContent>
+                                    {/* Render a list of services offered */}
+                                    <p>Displaying {profileData.services.length} services.</p>
+                                </CardContent>
+                            </Card>
+                        )}
+                        {profileData.products && profileData.products.length > 0 && (
+                            <Card className="mt-6">
+                                <CardHeader><CardTitle>Products</CardTitle></CardHeader>
+                                <CardContent>
+                                    {/* Render a list of products */}
+                                    <p>Displaying {profileData.products.length} products.</p>
+                                </CardContent>
+                            </Card>
+                        )}
                     </div>
                 </div>
             </div>

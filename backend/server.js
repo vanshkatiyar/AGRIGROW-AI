@@ -33,18 +33,26 @@ connectDB();
 // --- Express App Setup ---
 const app = express();
 app.use(cors({
-    origin: ["http://127.0.0.1:5002", "http://127.0.0.1:3000", "http://localhost:3000", "http://localhost:5173", "http://localhost:8080", "https://agrigrow-ai.vercel.app", "https://agrigrow-ai.onrender.com"],
+    origin: ["http://localhost:3000", "http://localhost:5173", "https://agrigrow-ai.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(express.json());
 
+// Add a simple logger to see if requests are reaching here
+app.use((req, res, next) => {
+    console.log(`Incoming Request: ${req.method} ${req.originalUrl}`);
+    next();
+});
+ 
 // --- API Routes ---
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const aiRoutes = require('./routes/aiRoutes');
-const weatherRoutes = require('./routes/weatherRoutes');
+// --- THIS IS THE CORRECTED LINE ---
+const weatherRoutes = require('./routes/weatherRoutes'); // Changed from weatherRoutes to newWeatherRoutes
+// --- END OF CORRECTION ---
 const marketRoutes = require('./routes/marketRoutes');
 const postRoutes = require('./routes/postRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
@@ -57,7 +65,7 @@ const articleRoutes = require('./routes/articleRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const callRoutes = require('./routes/callRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
-
+ 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/ai', aiRoutes);

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://agrigrow-ai-backend.vercel.app/api',
+  baseURL: 'http://localhost:5002/api',
 });
 
 api.interceptors.request.use(

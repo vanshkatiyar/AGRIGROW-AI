@@ -6,7 +6,43 @@ export interface User {
     location: string;
     role: 'farmer' | 'buyer' | 'expert' | 'serviceProvider' | null;
     profileImage?: string;
-    [key: string]: any; 
+    coverPhoto?: string;
+    bio?: string;
+    verified?: boolean;
+    createdAt: string;
+    posts?: Post[];
+    services?: ServiceProviderProfile[];
+    products?: Product[];
+    [key: string]: any;
+}
+
+export interface Post {
+    _id: string;
+    author: User;
+    content: string;
+    images?: string[];
+    likes: string[];
+    comments: {
+        user: User;
+        content: string;
+        createdAt: string;
+    }[];
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Product {
+    _id: string;
+    owner: User;
+    name: string;
+    category: string;
+    price: number;
+    unit: string;
+    description?: string;
+    images?: string[];
+    inStock: boolean;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface Conversation {

@@ -3,7 +3,7 @@ import axios from 'axios';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL + '/api/posts';
 
 const getConfig = () => ({
-    headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
 });
 
 export const getPosts = async () => {

@@ -29,7 +29,7 @@ const libraries: Libraries = ["places"];
 
 const InteractiveMapPage: React.FC = () => {
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: "YOUR_GOOGLE_MAPS_API_KEY", // Replace with your actual API key
+    googleMapsApiKey: "AIzaSyBFnTA1PT96WbAGimf-HObINBHyKYYUIsI",
     libraries,
   });
 
