@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import WeatherBackground from '@/components/common/WeatherBackground';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -169,7 +170,9 @@ const NewWeather = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto p-4 sm:p-6 space-y-6">
+      <div className="relative min-h-screen"> {/* Ensure the container is relative for the absolute background */}
+        {weather && <WeatherBackground weatherCondition={weather.current.weather[0].main} />}
+        <div className="container mx-auto p-4 sm:p-6 space-y-6 relative z-10">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-foreground mb-2">Weather Dashboard</h1>
           <p className="text-muted-foreground">Comprehensive weather data and forecasts for your location.</p>
@@ -215,6 +218,7 @@ const NewWeather = () => {
             {renderDailyForecast(weather)}
           </div>
         )}
+      </div>
       </div>
     </Layout>
   );

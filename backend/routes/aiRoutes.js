@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
-const { askPerplexity, askGemini, textToSpeech } = require('../controllers/aiController');
+const aiController = require('../controllers/aiController');
 
-router.post('/ask', protect, askPerplexity);
-router.post('/ask-gemini', protect, askGemini);
-router.post('/text-to-speech', protect, textToSpeech);
+router.post('/ask', protect, aiController.askGemini);
+router.post('/ask-gemini', protect, aiController.askGemini);
+router.post('/text-to-speech', protect, aiController.textToSpeech);
 
 module.exports = router;

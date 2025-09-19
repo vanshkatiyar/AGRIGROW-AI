@@ -9,7 +9,7 @@ const mongoose = require('mongoose');
 // --- Environment Variable Configuration ---
 const credentialsPath = path.join(__dirname, 'google-credentials.json');
 process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 // --- Database Connection ---
 const connectDB = async () => {
@@ -49,7 +49,6 @@ app.use((req, res, next) => {
 // --- API Routes ---
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
-const aiRoutes = require('./routes/aiRoutes');
 // --- THIS IS THE CORRECTED LINE ---
 const weatherRoutes = require('./routes/weatherRoutes'); // Changed from weatherRoutes to newWeatherRoutes
 // --- END OF CORRECTION ---
@@ -57,7 +56,6 @@ const marketRoutes = require('./routes/marketRoutes');
 const postRoutes = require('./routes/postRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
 const productRoutes = require('./routes/productRoutes');
-const cropDoctorRoutes = require('./routes/cropDoctorRoutes');
 const cropRoutes = require('./routes/cropRoutes');
 const consultationRoutes = require('./routes/consultationRoutes');
 const expertRoutes = require('./routes/expertRoutes');
@@ -65,16 +63,16 @@ const articleRoutes = require('./routes/articleRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const callRoutes = require('./routes/callRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
+const aiRoutes = require('./routes/aiRoutes');
+const Service = require('./models/Service'); // Assuming the model exists
  
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/ai', aiRoutes);
 app.use('/api/weather', weatherRoutes);
 app.use('/api/market', marketRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/crop-doctor', cropDoctorRoutes);
 app.use('/api/crops', cropRoutes);
 app.use('/api/consultations', consultationRoutes);
 app.use('/api/experts', expertRoutes);
@@ -107,28 +105,11 @@ app.get('/', (req, res) => {
         }
     });
 });
-// --- Global Error Handling ---
-app.use((req, res, next) => {
-    const error = new Error(`Not Found - ${req.originalUrl}`);
-    res.status(404);
-    next(error);
-});
-
-app.use((error, req, res, next) => {
-    const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
-    res.status(statusCode);
-    res.json({
-        message: error.message,
-        stack: process.env.NODE_ENV === 'production' ? '🥞' : error.stack,
-    });
-});
-
-
 // --- Server and Socket.IO Setup ---
 const server = http.createServer(app);
 const io = new Server(server, { 
     cors: { 
-        origin: ["http://127.0.0.1:5002", "http://127.0.0.1:3000", "http://localhost:5173", "http://localhost:8080", "https://agrigrow-ai.vercel.app", "https://agrigrow-ai.onrender.com"],
+        origin: ["http://localhost:3000", "http://127.0.0.1:5002", "http://127.0.0.1:3000", "http://localhost:5173", "http://localhost:8080", "https://agrigrow-ai.vercel.app", "https://agrigrow-ai.onrender.com"],
         methods: ["GET", "POST"],
         credentials: true
     }
@@ -155,6 +136,7 @@ const {
     handleCallConnected,
     handleDisconnect
 } = require('./socket/messageSocketHandler');
+const serviceSocketHandler = require('./socket/serviceSocketHandler');
 
 // Socket authentication middleware
 io.use(authenticateSocket);
@@ -240,8 +222,26 @@ io.on('connection', async (socket) => {
     });
 });
 
+// Service socket handler
+serviceSocketHandler(io);
+
 // --- Start Server ---
 const PORT = process.env.PORT || 5002;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+});
+// --- Global Error Handling ---
+app.use((req, res, next) => {
+    const error = new Error(`Not Found - ${req.originalUrl}`);
+    res.status(404);
+    next(error);
+});
+
+app.use((error, req, res, next) => {
+    const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+    res.status(statusCode);
+    res.json({
+        message: error.message,
+        stack: process.env.NODE_ENV === 'production' ? '🥞' : error.stack,
+    });
 });

@@ -24,7 +24,7 @@ import {
   Star
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { askAIAssistant } from '@/services/aiService';
+import { askAIAssistant, textToSpeech } from '@/services/aiService';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 
 interface Message {
@@ -114,11 +114,11 @@ const FarmerAIBot: React.FC = () => {
 
       setMessages(prev => [...prev, botMessage]);
     } catch (error: any) {
-      console.error('Error getting bot response:', error);
+      console.error('Error getting bot response:', error.message);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'bot',
-        content: error.message || "I'm sorry, I'm having trouble processing your request right now. Please try again later.",
+        content: `Error: ${error.message}` || "I'm sorry, I'm having trouble processing your request right now. Please try again later.",
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -146,24 +146,18 @@ const FarmerAIBot: React.FC = () => {
   };
 
   const handlePlayAudio = async (text: string) => {
-    if (window.puter && window.puter.ai && typeof (window.puter.ai as any).txt2speech === 'function') {
-      try {
-        setIsSpeaking(true);
-        const audio = await (window.puter.ai as any).txt2speech(text, {
-          voice: "Joanna",
-          engine: "neural",
-          language: "en-US"
-        });
-        audio.play();
-        audio.onended = () => {
-          setIsSpeaking(false);
-        };
-      } catch (error: any) {
-        toast.error(error.message || 'Failed to play audio.');
+    try {
+      setIsSpeaking(true);
+      const audio = await textToSpeech(text);
+      setActiveAudio(audio);
+      audio.play();
+      audio.onended = () => {
         setIsSpeaking(false);
-      }
-    } else {
-      toast.error('Text-to-speech function is not available.');
+        setActiveAudio(null);
+      };
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to play audio.');
+      setIsSpeaking(false);
     }
   };
 

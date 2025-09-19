@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useMutation } from '@tanstack/react-query';
-import { askAIAssistant } from '@/services/aiService';
+import { askAIAssistant, textToSpeech } from '@/services/aiService';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Sparkles, AlertTriangle, Mic, Volume2 } from 'lucide-react';
@@ -16,7 +16,7 @@ const AIAssistantPage = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const mutation = useMutation({
     mutationFn: (newQuery: string) => askAIAssistant(newQuery),
@@ -82,26 +82,25 @@ const AIAssistantPage = () => {
     }
   };
 
-  const speakResponse = () => {
-    if (mutation.data?.answer && window.speechSynthesis) {
-      // Cancel any ongoing speech
-      window.speechSynthesis.cancel();
-      
-      // Create new utterance
-      const utterance = new SpeechSynthesisUtterance(mutation.data.answer);
-      utteranceRef.current = utterance;
-      
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
-      
-      window.speechSynthesis.speak(utterance);
+  const speakResponse = async () => {
+    if (mutation.data?.answer) {
+      try {
+        setIsSpeaking(true);
+        const audio = await textToSpeech(mutation.data.answer);
+        audioRef.current = audio;
+        audio.play();
+        audio.onended = () => setIsSpeaking(false);
+      } catch (error) {
+        console.error("Error playing audio:", error);
+        setIsSpeaking(false);
+      }
     }
   };
 
   const stopSpeaking = () => {
-    if (window.speechSynthesis && utteranceRef.current) {
-      window.speechSynthesis.cancel();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
       setIsSpeaking(false);
     }
   };
@@ -174,7 +173,7 @@ const AIAssistantPage = () => {
               </div>
             </CardHeader>
             <CardContent className="prose prose-sm dark:prose-invert max-w-none">
-              <ReactMarkdown>{mutation.data.answer}</ReactMarkdown>
+              <ReactMarkdown>{typeof mutation.data?.answer === 'string' ? mutation.data.answer : ''}</ReactMarkdown>
             </CardContent>
           </Card>
         )}

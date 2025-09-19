@@ -101,6 +101,7 @@ export interface AddCropData {
   estimatedRevenue: number;
 }
 
+export type Service = ServiceProviderProfile;
 export interface ServiceProviderProfile {
     _id: string;
     owner: User;
