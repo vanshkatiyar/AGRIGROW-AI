@@ -39,8 +39,8 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import FarmerDashboard from "./pages/farmer/FarmerDashboard";
 import BuyerDashboard from "./pages/buyer/BuyerDashboard";
 import ExpertDashboard from "./pages/expert/ExpertDashboard";
-import ServiceProviderDashboard from "./pages/serviceProvider/ServiceProviderDashboard"; // New import
-import OfferServicePage from "./pages/serviceProvider/OfferServicePage"; // New import
+import ServiceProviderDashboard from "./pages/serviceProvider/ServiceProviderDashboard";
+
 
 // Role-Specific Expense Tracker Pages
 import FarmerExpenseTracker from "./pages/farmer/FarmerExpenseTracker";
@@ -86,8 +86,8 @@ const App = () => (
               <Route path="/farmer-dashboard" element={<ProtectedRoute><FarmerDashboard /></ProtectedRoute>} />
               <Route path="/buyer-dashboard" element={<ProtectedRoute><BuyerDashboard /></ProtectedRoute>} />
               <Route path="/expert-dashboard" element={<ProtectedRoute><ExpertDashboard /></ProtectedRoute>} />
-              <Route path="/service-provider-dashboard" element={<ProtectedRoute><ServiceProviderDashboard /></ProtectedRoute>} /> {/* New route */}
-              <Route path="/offer-service" element={<ProtectedRoute><OfferServicePage /></ProtectedRoute>} /> {/* New route */}
+              <Route path="/service-provider-dashboard" element={<ProtectedRoute><ServiceProviderDashboard /></ProtectedRoute>} />
+              
               
               {/* Core Features */}
               <Route path="/feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />

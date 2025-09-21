@@ -169,6 +169,9 @@ export interface ServiceRequest {
     serviceType: 'tractor' | 'harvester' | 'supplier' | 'manufacturer';
     requestType: string; // e.g., 'rental', 'purchase', 'consultation'
     serviceDetails: string;
+    description?: string; // Added optional description
+    scheduledDate?: string; // Added optional scheduled date
+    price?: number; // Added optional price
     status: 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
     messages: {
         sender: User;
