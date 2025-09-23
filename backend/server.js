@@ -80,6 +80,7 @@ app.use('/api/articles', articleRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/calls', callRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

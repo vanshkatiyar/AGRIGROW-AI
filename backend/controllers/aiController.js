@@ -1,93 +1,129 @@
 const axios = require('axios');
 
-const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions';
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent`;
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
 
-const askPerplexity = async (req, res) => {
-    const { query } = req.body;
-    if (!query) {
-        return res.status(400).json({ message: 'Query is required' });
+const ask = async (req, res) => {
+    // Validate request method
+    if (req.method !== 'POST') {
+        return res.status(405).json({ message: 'Method not allowed. Use POST.' });
     }
-    try {
-        const payload = {
-            model: "sonar-medium-8x7b-chat",
-            messages: [
-                { role: "system", content: "You are an expert agricultural assistant for Indian farmers. Provide clear, concise, and actionable advice. If you mention prices, use Indian Rupees (₹)." },
-                { role: "user", content: query }
-            ],
-        };
-        const headers = {
-            'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        };
-        const { data } = await axios.post(PERPLEXITY_API_URL, payload, { headers });
-        res.json({ answer: data.choices[0].message.content });
-    } catch (error) {
-        console.error('Perplexity API Error:', error.response ? error.response.data : error.message);
-        res.status(500).json({ message: 'Failed to get a response from the AI assistant.' });
-    }
-};
 
-const askGemini = async (req, res) => {
     const { prompt } = req.body;
+
     if (!prompt) {
-        return res.status(400).json({ message: 'A prompt is required.' });
+        return res.status(400).json({ 
+            message: 'A prompt is required.',
+            example: { prompt: "Your question here" }
+        });
+    }
+
+    // Validate API key
+    if (!process.env.GEMINI_API_KEY) {
+        console.error('GEMINI_API_KEY is not configured');
+        return res.status(500).json({ 
+            message: 'Server configuration error.' 
+        });
     }
 
     try {
         const payload = {
-            contents: [{ parts: [{ text: prompt }] }]
+            contents: [{ 
+                parts: [{ text: prompt.trim() }] 
+            }],
+            generationConfig: {
+                temperature: 0.7,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 1024,
+            }
         };
 
-        const { data } = await axios.post(
+        const response = await axios.post(
             `${GEMINI_API_URL}?key=${process.env.GEMINI_API_KEY}`,
             payload,
             {
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Your-App-Name/1.0.0'
+                },
+                timeout: 30000 // 30 second timeout
             }
         );
 
-        const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response text found.";
-        res.json({ answer });
+        // More robust response handling
+        if (!response.data) {
+            throw new Error('No data received from API');
+        }
 
-    } catch (error) {
-        console.error('Gemini API Error:', error.response ? error.response.data : error.message);
-        res.status(500).json({ message: 'Failed to get a response from the Gemini assistant.' });
-    }
-};
+        const candidate = response.data.candidates?.[0];
+        if (!candidate) {
+            throw new Error('No candidates in response');
+        }
 
-const textToSpeech = async (req, res) => {
-    const { text } = req.body;
-    if (!text) {
-        return res.status(400).json({ message: 'Text is required.' });
-    }
+        const answer = candidate.content?.parts?.[0]?.text || 
+                      "I'm sorry, I couldn't generate a response for that prompt.";
 
-    try {
-        const payload = {
-            model: 'elevenlabs/elevenmultilingual-v2',
-            input: text,
-        };
-
-        const headers = {
-            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-            'Content-Type': 'application/json',
-        };
-
-        const { data } = await axios.post('https://openrouter.ai/api/v1/audio/speech', payload, {
-            headers,
-            responseType: 'arraybuffer'
+        res.json({ 
+            answer,
+            usage: response.data.usageMetadata // Include usage stats if available
         });
 
-        res.set('Content-Type', 'audio/mpeg');
-        res.send(data);
     } catch (error) {
-        console.error('OpenRouter TTS Error:', error.response ? error.response.data : error.message);
-        res.status(500).json({ message: 'Failed to process text-to-speech.' });
+        console.error('Gemini API Error:', {
+            message: error.message,
+            status: error.response?.status,
+            data: error.response?.data,
+            url: error.config?.url
+        });
+
+        // More specific error messages
+        if (error.code === 'ECONNREFUSED') {
+            return res.status(503).json({ 
+                message: 'Service temporarily unavailable.' 
+            });
+        }
+
+        if (error.response) {
+            // Handle different HTTP status codes from Gemini API
+            const status = error.response.status;
+            const errorData = error.response.data;
+            
+            if (status === 401) {
+                return res.status(500).json({ 
+                    message: 'Invalid API key configuration.' 
+                });
+            } else if (status === 429) {
+                return res.status(429).json({ 
+                    message: 'Rate limit exceeded. Please try again later.' 
+                });
+            } else if (status === 400) {
+                return res.status(400).json({ 
+                    message: 'Invalid request: ' + (errorData.error?.message || 'Bad request')
+                });
+            } else if (status >= 500) {
+                return res.status(502).json({ 
+                    message: 'AI service is currently unavailable.' 
+                });
+            }
+        }
+
+        res.status(500).json({ 
+            message: 'Failed to get a response from the AI assistant.',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 };
+
+// Optional: Add a health check endpoint
+const healthCheck = async (req, res) => {
+    res.json({ 
+        status: 'OK', 
+        service: 'Gemini AI API',
+        timestamp: new Date().toISOString()
+    });
+};
+
 module.exports = {
-    askPerplexity,
-    askGemini,
-    textToSpeech,
+    ask,
+    healthCheck,
 };

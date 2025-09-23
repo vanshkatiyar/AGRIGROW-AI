@@ -210,3 +210,6 @@ export interface Consultation {
     createdAt: string;
     updatedAt: string;
 }
+export interface AIResponse {
+  answer: string;
+}

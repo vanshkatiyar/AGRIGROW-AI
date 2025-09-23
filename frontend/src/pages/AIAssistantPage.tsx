@@ -1,29 +1,38 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import ReactMarkdown from 'react-markdown';
+import { Sparkles, Volume2, Copy, AlertTriangle, Mic, Send } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useMutation } from '@tanstack/react-query';
-import { askAIAssistant, textToSpeech } from '@/services/aiService';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Sparkles, AlertTriangle, Mic, Volume2 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
+import { askAIAssistant } from '@/services/aiService';
+import { FullScreenLoader } from '@/components/common/FullScreenLoader';
+import { AIResponse } from '@/types';
 
 const AIAssistantPage = () => {
   const [query, setQuery] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const synthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  const mutation = useMutation({
-    mutationFn: (newQuery: string) => askAIAssistant(newQuery),
-  });
+  const mutation = useMutation<AIResponse, Error, string>({ mutationFn: askAIAssistant });
 
-  // Initialize speech recognition
+  const handleAsk = () => {
+    if (query.trim()) {
+      mutation.mutate(query);
+    }
+  };
+
+  // Check speech synthesis support
   useEffect(() => {
+    setSpeechSupported('speechSynthesis' in window && 'SpeechSynthesisUtterance' in window);
+    
+    // Speech recognition initialization (your existing code)
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       recognitionRef.current = new SpeechRecognition();
@@ -36,11 +45,11 @@ const AIAssistantPage = () => {
         const latestResult = results[results.length - 1];
         
         if (latestResult.isFinal) {
-          const finalTranscript = latestResult[0].transcript;
+          const finalTranscript = latestResult.transcript;
           setQuery(prev => prev + ' ' + finalTranscript);
           setInterimTranscript('');
         } else {
-          setInterimTranscript(latestResult[0].transcript);
+          setInterimTranscript(latestResult.transcript);
         }
       };
 
@@ -54,55 +63,77 @@ const AIAssistantPage = () => {
         setIsRecording(false);
         setInterimTranscript('');
       };
-    } else {
-      console.warn('Speech Recognition API not supported');
     }
   }, []);
 
-  const handleAsk = (e: React.FormEvent) => {
-    e.preventDefault();
-    const finalQuery = query + (interimTranscript ? ' ' + interimTranscript : '');
-    if (finalQuery.trim()) {
-      mutation.mutate(finalQuery);
-      setQuery('');
-      setInterimTranscript('');
-    }
-  };
-
-  const toggleRecording = () => {
-    if (recognitionRef.current) {
-      if (!isRecording) {
-        setInterimTranscript('');
-        recognitionRef.current.start();
-        setIsRecording(true);
-      } else {
-        recognitionRef.current.stop();
-        setIsRecording(false);
-      }
-    }
-  };
-
-  const speakResponse = async () => {
-    if (mutation.data?.answer) {
+  // Text-to-Speech using Web Speech API
+  const speakResponse = () => {
+    if (mutation.data?.answer && speechSupported) {
       try {
-        setIsSpeaking(true);
-        const audio = await textToSpeech(mutation.data.answer);
-        audioRef.current = audio;
-        audio.play();
-        audio.onended = () => setIsSpeaking(false);
+        // Stop any ongoing speech
+        stopSpeaking();
+        
+        const speech = new SpeechSynthesisUtterance();
+        speech.text = mutation.data.answer;
+        speech.volume = 1;
+        speech.rate = 1;
+        speech.pitch = 1;
+        speech.lang = 'en-US';
+        
+        // Optional: Choose a specific voice
+        const voices = window.speechSynthesis.getVoices();
+        const englishVoice = voices.find(voice => 
+          voice.lang.includes('en') && voice.name.includes('Female')
+        );
+        if (englishVoice) {
+          speech.voice = englishVoice;
+        }
+        
+        speech.onstart = () => setIsSpeaking(true);
+        speech.onend = () => setIsSpeaking(false);
+        speech.onerror = (event) => {
+          console.error('Speech synthesis error:', event);
+          setIsSpeaking(false);
+        };
+        
+        synthesisRef.current = speech;
+        window.speechSynthesis.speak(speech);
+        
       } catch (error) {
-        console.error("Error playing audio:", error);
+        console.error("Error with speech synthesis:", error);
         setIsSpeaking(false);
       }
+    } else if (!speechSupported) {
+      alert('Text-to-speech is not supported in your browser. Please try Chrome, Edge, or Safari.');
     }
   };
 
   const stopSpeaking = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
       setIsSpeaking(false);
     }
+  };
+
+  // Load voices when available
+  useEffect(() => {
+    if (speechSupported) {
+      const loadVoices = () => {
+        // Voices are loaded asynchronously
+      };
+      
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+      loadVoices();
+    }
+  }, [speechSupported]);
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      recognitionRef.current?.stop();
+    } else {
+      recognitionRef.current?.start();
+    }
+    setIsRecording(!isRecording);
   };
 
   return (
@@ -114,62 +145,83 @@ const AIAssistantPage = () => {
           <p className="text-muted-foreground">
             Ask anything about crops, pests, soil, market trends, and more.
           </p>
+          {!speechSupported && (
+            <Alert className="mt-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Browser Compatibility</AlertTitle>
+              <AlertDescription>
+                Text-to-speech works best in Chrome, Edge, or Safari. Some features may be limited in your current browser.
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
 
-        <Card>
-          <CardContent className="p-4">
-            <form onSubmit={handleAsk} className="space-y-4">
-              <div className="relative">
-                <Textarea
-                  placeholder="e.g., What are the best organic fertilizers for tomato plants in a warm climate?"
-                  value={isRecording ? interimTranscript : query}
-                  onChange={(e) => isRecording ? setInterimTranscript(e.target.value) : setQuery(e.target.value)}
-                  className="resize-none pr-10"
-                  rows={4}
-                />
-                <Button
-                  type="button"
-                  variant={isRecording ? "destructive" : "outline"}
-                  size="icon"
-                  className="absolute right-2 top-2"
-                  onClick={toggleRecording}
-                  disabled={!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)}
-                >
-                  <Mic className="h-4 w-4" />
-                </Button>
-              </div>
-              <Button type="submit" className="w-full" disabled={mutation.isPending}>
-                {mutation.isPending ? <LoadingSpinner className="mr-2 h-4 w-4" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                {mutation.isPending ? 'Thinking...' : 'Ask the Assistant'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleAsk();
+          }}
+          className="flex items-center gap-2"
+        >
+          <Textarea
+            value={query + interimTranscript}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleAsk();
+              }
+            }}
+            placeholder="Type your question or use the mic..."
+            className="flex-grow resize-none"
+            rows={1}
+          />
+          <Button type="button" variant="outline" size="icon" onClick={toggleRecording} title={isRecording ? 'Stop recording' : 'Start recording'}>
+            <Mic className={`h-4 w-4 ${isRecording ? 'text-red-500 animate-pulse' : ''}`} />
+          </Button>
+          <Button type="submit" disabled={mutation.isPending}>
+            {mutation.isPending ? 'Thinking...' : <Send className="h-4 w-4" />}
+          </Button>
+        </form>
 
-        {mutation.isError && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle>
-            <AlertDescription>{mutation.error.message}</AlertDescription>
-          </Alert>
-        )}
+        {mutation.isPending && <FullScreenLoader />}
 
         {mutation.isSuccess && (
           <Card className="mt-6 animate-in fade-in-50">
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle>AI Assistant's Response</CardTitle>
-                <Button
-                  variant={isSpeaking ? "destructive" : "outline"}
-                  size="icon"
-                  onClick={isSpeaking ? stopSpeaking : speakResponse}
-                  disabled={!('speechSynthesis' in window)}
-                >
-                  {isSpeaking ? (
-                    <div className="h-4 w-4 rounded-full bg-red-500 animate-pulse"></div>
-                  ) : (
-                    <Volume2 className="h-4 w-4" />
-                  )}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant={isSpeaking ? "destructive" : "outline"}
+                    size="icon"
+                    onClick={isSpeaking ? stopSpeaking : speakResponse}
+                    disabled={!speechSupported}
+                    title={speechSupported ? 
+                      (isSpeaking ? 'Stop speaking' : 'Read aloud') : 
+                      'Text-to-speech not supported'}
+                  >
+                    {isSpeaking ? (
+                      <div className="h-4 w-4 rounded-full bg-red-500 animate-pulse"></div>
+                    ) : (
+                      <Volume2 className="h-4 w-4" />
+                    )}
+                  </Button>
+                  
+                  {/* Optional: Add a copy button */}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      if (mutation.data?.answer) {
+                        navigator.clipboard.writeText(mutation.data.answer);
+                      }
+                    }}
+                    title="Copy to clipboard"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="prose prose-sm dark:prose-invert max-w-none">
