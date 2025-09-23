@@ -1,4 +1,5 @@
 const axios = require('axios');
+const ttsService = require('./ttsService');
 
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
 
@@ -8,14 +9,17 @@ const ask = async (req, res) => {
         return res.status(405).json({ message: 'Method not allowed. Use POST.' });
     }
 
-    const { prompt } = req.body;
+    const { prompt, language } = req.body;
 
     if (!prompt) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             message: 'A prompt is required.',
-            example: { prompt: "Your question here" }
+            example: { prompt: "Your question here", language: "en" }
         });
     }
+
+    const languageInstruction = language ? `Please respond in ${language}.` : '';
+    const fullPrompt = `${languageInstruction}\n\n${prompt}`.trim();
 
     // Validate API key
     if (!process.env.GEMINI_API_KEY) {
@@ -28,7 +32,7 @@ const ask = async (req, res) => {
     try {
         const payload = {
             contents: [{ 
-                parts: [{ text: prompt.trim() }] 
+                parts: [{ text: fullPrompt }]
             }],
             generationConfig: {
                 temperature: 0.7,
@@ -123,7 +127,66 @@ const healthCheck = async (req, res) => {
     });
 };
 
+// Enhanced text-to-speech endpoint
+const textToSpeech = async (req, res) => {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ message: 'Method not allowed. Use POST.' });
+    }
+
+    const { text, language = 'en' } = req.body;
+
+    if (!text) {
+        return res.status(400).json({
+            message: 'Text is required.',
+            example: { text: "Your text here", language: "hi" }
+        });
+    }
+
+    // Validate language
+    const supportedLanguages = ['en', 'hi', 'ta', 'te', 'kn', 'ml', 'bn', 'mr', 'gu', 'pa', 'or', 'as', 'ur'];
+    if (!supportedLanguages.includes(language)) {
+        return res.status(400).json({
+            message: 'Unsupported language.',
+            supportedLanguages: supportedLanguages
+        });
+    }
+
+    // Limit text length
+    if (text.length > 1000) {
+        return res.status(400).json({
+            message: 'Text too long. Maximum 1000 characters allowed.'
+        });
+    }
+
+    try {
+        // Stream audio directly to response
+        await ttsService.streamAudio(text, language, res);
+        
+    } catch (error) {
+        console.error('TTS Service Error:', error);
+        
+        // Specific error handling
+        if (error.message.includes('Failed to generate speech')) {
+            return res.status(400).json({
+                message: 'Unable to generate speech for this text.'
+            });
+        }
+        
+        if (error.message.includes('network') || error.message.includes('ECONNREFUSED')) {
+            return res.status(503).json({
+                message: 'TTS service temporarily unavailable.'
+            });
+        }
+
+        res.status(500).json({
+            message: 'Failed to synthesize speech.',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+
 module.exports = {
     ask,
     healthCheck,
+    textToSpeech,
 };
