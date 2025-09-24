@@ -9,13 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Stethoscope, UploadCloud, XCircle, Leaf, ShieldCheck, AlertTriangle, Sprout, Bug, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-// Add TypeScript definitions for non-standard window properties.
-declare global {
-  interface Window {
-    puter: any;
-  }
-}
+import { analyzePlantImage } from '@/services/geminiService';
 
 type DiagnosisResult = {
   disease: string;
@@ -100,17 +94,6 @@ const CropDoctorPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [confidence, setConfidence] = useState<number>(0);
 
-  useEffect(() => {
-    if (typeof window.puter === 'undefined') {
-      const script = document.createElement('script');
-      script.src = 'https://js.puter.com/v2/';
-      script.async = true;
-      script.onload = () => console.log('Puter.js loaded');
-      script.onerror = () => setError('Failed to load Puter.js');
-      document.head.appendChild(script);
-    }
-  }, []);
-
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
     setSelectedFile(file);
@@ -135,11 +118,6 @@ const CropDoctorPage = () => {
       return;
     }
 
-    if (typeof window.puter === 'undefined') {
-      setError('Puter.js is not loaded yet. Please try again in a moment.');
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
     setAnalysisResult(null);
@@ -156,104 +134,28 @@ const CropDoctorPage = () => {
     }, 100);
 
     try {
-      const prompt = `You are an expert plant pathologist AI. Analyze the plant image and provide a diagnosis. 
-      Return ONLY a valid JSON object with these exact keys: "disease", "cause", "prevention", "treatment".
-      If the plant appears healthy, set "disease" to "Healthy".
-      If you cannot determine something, use "Not identifiable from image".
-      Do not include any other text or formatting outside the JSON object.`;
+      const response = await analyzePlantImage(selectedFile);
 
-      console.log("Uploading file...");
-      
-      // Convert the file to a data URL first
-      const dataUrl = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(selectedFile);
-      });
-      
-      console.log("Using data URL for analysis");
-      
-      // Use the data URL directly with Puter AI
-      const response = await window.puter.ai.chat(prompt, dataUrl, { model: "gpt-5-nano" });
-      
-      console.log("AI Response:", response);
-      
-      // Extract the content string from the response object
-      let resultText = '';
-      if (typeof response === 'object' && response.message && response.message.content) {
-        resultText = response.message.content;
-      } else if (typeof response === 'string') {
-        resultText = response;
-      }
-      
-      // Clean the response text - remove markdown code blocks if present
-      resultText = resultText.replace(/```json|```/g, '').trim();
-      
-      // Improved JSON extraction and validation
-      let parsedResult;
-      try {
-        // Parse the content string as JSON
-        parsedResult = JSON.parse(resultText);
-      } catch (e) {
-        // If that fails, try to find the first valid JSON object in the response
-        const jsonStart = resultText.indexOf('{');
-        const jsonEnd = resultText.lastIndexOf('}');
-        
-        if (jsonStart === -1 || jsonEnd === -1 || jsonEnd < jsonStart) {
-          console.error('No JSON structure found in AI response:', resultText);
-          throw new Error("The AI returned an invalid response format. Please try again.");
-        }
-        
-        const jsonCandidate = resultText.substring(jsonStart, jsonEnd + 1);
-        try {
-          parsedResult = JSON.parse(jsonCandidate);
-        } catch (e2) {
-          console.error('Failed to parse extracted JSON:', jsonCandidate);
-          console.error('Full AI response content:', resultText);
-          throw new Error("The AI returned malformed data. Please try again.");
-        }
-      }
-      
-      // Validate the extracted JSON structure
-      const requiredKeys = ['disease', 'cause', 'prevention', 'treatment'];
-      if (!parsedResult || typeof parsedResult !== 'object' ||
-          !requiredKeys.every(key => key in parsedResult)) {
-        console.error('Invalid JSON structure from AI:', parsedResult);
-        throw new Error("The AI response is missing required fields.");
-      }
+      // Clear interval and stop loading regardless of success/failure
+      clearInterval(interval);
+      setIsLoading(false);
 
-      // Generate a realistic confidence score based on response quality
-      const simulatedConfidence = Math.floor(Math.random() * 21) + 75; // 75-95%
-      
-      const finalResult: DiagnosisResult = {
-        disease: parsedResult.disease || "Disease not provided by AI",
-        cause: parsedResult.cause || "Cause not provided by AI",
-        prevention: parsedResult.prevention || "Prevention steps not provided by AI",
-        treatment: parsedResult.treatment || "Treatment not provided by AI",
-        confidence: simulatedConfidence
-      };
-      
-      setAnalysisResult(finalResult);
-      setConfidence(100); // Set to 100% when done
-
-    } catch (err) {
+      if (response.success) {
+        const simulatedConfidence = Math.floor(Math.random() * 21) + 75; // 75-95%
+        const finalResult: DiagnosisResult = {
+          ...response.result,
+          confidence: simulatedConfidence,
+        };
+        setAnalysisResult(finalResult);
+        setConfidence(100);
+      } else {
+        setError(response.message || 'Analysis failed.');
+        setConfidence(0);
+      }
+    } catch (err: any) {
       console.error('AI analysis failed:', err);
-      let errorMessage = 'An error occurred during the analysis. Please try again.';
-      if (err instanceof Error) {
-        // Provide more user-friendly error messages
-        if (err.message.includes('invalid response format')) {
-          errorMessage = 'The AI returned an unexpected response format. Please try again.';
-        } else if (err.message.includes('malformed data')) {
-          errorMessage = 'The AI returned invalid data. Please try again.';
-        } else if (err.message.includes('missing required fields')) {
-          errorMessage = 'The AI response was incomplete. Please try again.';
-        } else {
-          errorMessage = `Error: ${err.message}`;
-        }
-      }
-      setError(errorMessage);
+      setError(err.message || 'An error occurred during the analysis.');
       setConfidence(0);
-    } finally {
       setIsLoading(false);
       clearInterval(interval);
     }

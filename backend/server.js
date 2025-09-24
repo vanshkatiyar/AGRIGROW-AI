@@ -38,7 +38,8 @@ app.use(cors({
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Add a simple logger to see if requests are reaching here
 app.use((req, res, next) => {
@@ -64,6 +65,7 @@ const messageRoutes = require('./routes/messageRoutes');
 const callRoutes = require('./routes/callRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const geminiRoutes = require('./routes/geminiRoutes');
 const Service = require('./models/Service'); // Assuming the model exists
  
 app.use('/api/auth', authRoutes);
@@ -81,6 +83,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/calls', callRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/gemini', geminiRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
