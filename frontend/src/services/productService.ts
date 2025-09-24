@@ -1,32 +1,26 @@
-import axios from 'axios';
-
-const API_BASE_URL = 'http://VITE_API_BASE_URL/api/products';
-
-const getConfig = () => ({
-    headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
-});
+import api from '../api/axios';
 
 export const getProducts = async () => {
-    const response = await axios.get(API_BASE_URL, getConfig());
+    const response = await api.get('/products');
     return response.data;
 };
 
 export const createProduct = async (formData: FormData) => {
     const config = {
-        headers: { 'Content-Type': 'multipart/form-data', ...getConfig().headers },
+        headers: { 'Content-Type': 'multipart/form-data' },
     };
-    const response = await axios.post(API_BASE_URL, formData, config);
+    const response = await api.post('/products', formData, config);
     return response.data;
 };
 
-// --- NEW: Function to delete a product ---
+// Function to delete a product
 export const deleteProduct = async (productId: string) => {
-    const response = await axios.delete(`${API_BASE_URL}/${productId}`, getConfig());
+    const response = await api.delete(`/products/${productId}`);
     return response.data;
 };
 
-// --- NEW: Function to update a product ---
+// Function to update a product
 export const updateProduct = async ({ productId, productData }: { productId: string, productData: any }) => {
-    const response = await axios.put(`${API_BASE_URL}/${productId}`, productData, getConfig());
+    const response = await api.put(`/products/${productId}`, productData);
     return response.data;
 };
