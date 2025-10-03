@@ -1,54 +1,86 @@
-import axios from 'axios';
-import { mockMarketData, MarketDataRecord as MockRecord } from './mockMarketData';
+// services/marketService.ts
 
-// Re-export the type for use in components
-export type MarketDataRecord = MockRecord;
+const getAuthHeaders = () => {
+  console.log('Auth Token:', localStorage.getItem('authToken'));
+  const token = localStorage.getItem('authToken');
+  const headers = new Headers();
+  headers.append('Content-Type', 'application/json');
+  if (token) {
+    headers.append('Authorization', `Bearer ${token}`);
+  }
+  return headers;
+};
+const API_BASE_URL = '/api/market';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL + '/api';
-
-export interface MarketDataResponse {
-  records: MarketDataRecord[];
-  count: number;
+export interface MarketRecord {
+  market: string;
+  state: string;
+  commodity: string;
+  variety: string;
+  min_price: number;
+  max_price: number;
+  modal_price: number;
+  arrival_date: string;
+  source: 'live' | 'today' | 'reference';
+  lastUpdated?: string;
 }
 
-export const getMarketPrices = async (state: string, commodity: string): Promise<MarketDataResponse> => {
-  try {
-    const token = localStorage.getItem('authToken');
-    if (!token) throw new Error("User not authenticated.");
-    
-    const config = {
-      headers: { Authorization: `Bearer ${token}` },
-      params: { state, commodity }
-    };
+export interface MarketResponse {
+  success: boolean;
+  count: number;
+  records: MarketRecord[];
+  lastUpdated?: string;
+  source?: string;
+}
 
-    // 1. Fetch live data from our backend
-    const response = await axios.get(`${API_BASE_URL}/market/prices`, config);
-    const liveRecords: MarketDataRecord[] = (response.data.records || []).map((r: any) => ({ ...r, source: 'live' as 'live' }));
+export const getMarketPrices = async (state: string, commodity: string): Promise<MarketResponse> => {
+  const params = new URLSearchParams();
+  if (state) params.append('state', state);
+  if (commodity) params.append('commodity', commodity);
+  params.append('limit', '100');
 
-    // 2. Filter our mock data for relevant records
-    const referenceRecords = mockMarketData.filter(
-      record => record.state === state && record.commodity === commodity
-    );
-
-    // 3. Combine them: Live data takes priority. Avoid showing the same market twice.
-    const liveMarkets = new Set(liveRecords.map(r => r.market.toLowerCase()));
-    
-    const uniqueReferenceRecords = referenceRecords
-      .filter(r => !liveMarkets.has(r.market.toLowerCase()))
-      .map(r => ({ ...r, source: 'reference' as 'reference' }));
-
-    // 4. Create the final combined list
-    const finalRecords = [...liveRecords, ...uniqueReferenceRecords];
-    
-    return {
-      records: finalRecords,
-      count: finalRecords.length,
-    };
-
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(error.response.data.message || "An error occurred while fetching market prices.");
-    }
-    throw new Error("An unknown error occurred.");
+  const response = await fetch(`${API_BASE_URL}/prices?${params}`, { headers: getAuthHeaders() });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch market data: ${response.statusText}`);
   }
+
+  return response.json();
+};
+
+export const getLiveMarketData = async (state: string = '', type: 'popular' | 'specific' = 'popular'): Promise<MarketResponse> => {
+  const params = new URLSearchParams();
+  if (state && state !== 'all') params.append('state', state);
+  params.append('commodity', type === 'popular' ? 'popular' : '');
+  params.append('limit', '50');
+
+  const response = await fetch(`${API_BASE_URL}/prices?${params}`, { headers: getAuthHeaders() });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch live market data: ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
+export const getAvailableStates = async (): Promise<string[]> => {
+  const response = await fetch(`${API_BASE_URL}/states`, { headers: getAuthHeaders() });
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch states');
+  }
+
+  const data = await response.json();
+  return data.states || [];
+};
+
+export const getAvailableCommodities = async (): Promise<string[]> => {
+  const response = await fetch(`${API_BASE_URL}/commodities`, { headers: getAuthHeaders() });
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch commodities');
+  }
+
+  const data = await response.json();
+  return data.commodities || [];
 };

@@ -29,6 +29,7 @@ export const allCommodities = [
   "Round gourd", "Snakeguard", "Sponge gourd", "Tapioca", "Tinda", "Tomato", "Wheat"
 ].sort();
 
+export const popularCommodities = ['Rice', 'Wheat', 'Tomato', 'Onion', 'Potato', 'Cotton', 'Soybean', 'Maize'];
 
 // This is the data from your CSV file, formatted as a JavaScript array
 export const mockMarketData: MarketDataRecord[] = [
