@@ -1,59 +1,65 @@
-import React, { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { bookConsultation } from '@/services/consultationService';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import { Label } from '@/components/ui/label';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { expertService } from '../services/expertService';
+import { consultationService } from '../services/consultationService';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
 
-// This is a simplified example component.
-// The `expertId` would come from the page params or props.
-const ExpertProfilePage = ({ expertId, expertName }: { expertId: string; expertName: string }) => {
-    const { toast } = useToast();
-    const [issue, setIssue] = useState('');
-    const [crop, setCrop] = useState('');
+const ExpertProfilePage = () => {
+    const { id } = useParams();
+    const [expert, setExpert] = useState(null);
+    const [consultationTypes, setConsultationTypes] = useState([]);
 
-    const mutation = useMutation({
-        mutationFn: bookConsultation,
-        onSuccess: () => {
-            toast({ title: "Success!", description: "Your consultation request has been sent." });
-            // Close dialog, reset form, etc.
-        },
-        onError: (err: any) => {
-            toast({ title: "Error", description: err.response?.data?.message || "Could not book consultation.", variant: "destructive" });
-        },
-    });
+    useEffect(() => {
+        const fetchExpert = async () => {
+            try {
+                const expertData = await expertService.getExpertById(id);
+                setExpert(expertData);
+                const typesData = await consultationService.getConsultationTypesByExpert(id);
+                setConsultationTypes(typesData);
+            } catch (error) {
+                console.error('Error fetching expert details:', error);
+            }
+        };
+        fetchExpert();
+    }, [id]);
 
-    const handleSubmit = () => {
-        if (issue && crop) {
-            mutation.mutate({ expertId, issue, cropType: crop });
-        }
-    };
+    if (!expert) {
+        return <div>Loading...</div>;
+    }
 
     return (
-        <Dialog>
-            <DialogTrigger asChild>
-                <Button>Book Consultation with {expertName}</Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader><DialogTitle>Request a Consultation</DialogTitle></DialogHeader>
-                <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                        <Label>Crop Type</Label>
-                        <Input placeholder="e.g., Wheat" value={crop} onChange={(e) => setCrop(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Describe your issue</Label>
-                        <Textarea placeholder="Describe the problem you are facing with your crop..." value={issue} onChange={(e) => setIssue(e.target.value)} />
-                    </div>
-                    <Button onClick={handleSubmit} disabled={mutation.isPending} className="w-full">
-                        {mutation.isPending ? "Sending Request..." : "Send Request"}
-                    </Button>
-                </div>
-            </DialogContent>
-        </Dialog>
+        <div className="container mx-auto p-4">
+            <Card>
+                <CardHeader>
+                    <CardTitle>{expert.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p><strong>Bio:</strong> {expert.bio}</p>
+                    <p><strong>Specialties:</strong> {expert.expertDetails?.specializations.join(', ')}</p>
+                    <p><strong>Experience:</strong> {expert.expertDetails?.experienceYears} years</p>
+                </CardContent>
+            </Card>
+
+            <h2 className="text-2xl font-bold mt-8 mb-4">Consultation Services</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {consultationTypes.map(type => (
+                    <Card key={type._id}>
+                        <CardHeader>
+                            <CardTitle>{type.title}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p>{type.description}</p>
+                            <p><strong>Duration:</strong> {type.duration_minutes} minutes</p>
+                            <p><strong>Price:</strong> ${type.price}</p>
+                            <Link to={`/book-consultation/${expert._id}/${type._id}`}>
+                                <Button className="mt-4">Book Now</Button>
+                            </Link>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        </div>
     );
 };
 

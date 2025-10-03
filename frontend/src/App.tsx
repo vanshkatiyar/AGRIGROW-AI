@@ -27,8 +27,12 @@ import AIAssistantPage from "./pages/AIAssistantPage";
 import CropDoctorPage from "./pages/CropDoctorPage";
 import ConsultationHistory from "./pages/ConsultationHistory";
 import ExpertsPage from './pages/ExpertsPage';
+import ExpertProfilePage from './pages/ExpertProfilePage';
 import InteractiveMapPage from './pages/InteractiveMapPage';
 import SetExpertRolePage from './pages/SetExpertRole'; // Temporary route for role fix
+import ManageServicesPage from './pages/expert/ManageServicesPage';
+import ManageAvailabilityPage from './pages/expert/ManageAvailabilityPage';
+import BookConsultationForm from "./components/consultations/BookConsultationForm";
 
 // Auth Pages
 import Login from "./pages/auth/Login";
@@ -67,68 +71,72 @@ const App = () => (
       <SocketProvider>
         <CallProvider>
           <TooltipProvider>
-          {/* Toast and Sonner components for notifications */}
-          <Toaster />
-          <Sonner />
-          
-          <BrowserRouter>
-            <Routes>
-              {/* === Public Routes (Accessible without login) === */}
-              <Route path="/auth/login" element={<Login />} />
-              <Route path="/auth/register" element={<Register />} />
-              <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+            {/* Toast and Sonner components for notifications */}
+            <Toaster />
+            <Sonner />
 
-              {/* === Protected Routes (Require login) === */}
-              <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-              <Route path="/select-role" element={<ProtectedRoute><SelectRole /></ProtectedRoute>} />
-              
-              {/* Dashboards */}
-              <Route path="/farmer-dashboard" element={<ProtectedRoute><FarmerDashboard /></ProtectedRoute>} />
-              <Route path="/buyer-dashboard" element={<ProtectedRoute><BuyerDashboard /></ProtectedRoute>} />
-              <Route path="/expert-dashboard" element={<ProtectedRoute><ExpertDashboard /></ProtectedRoute>} />
-              <Route path="/service-provider-dashboard" element={<ProtectedRoute><ServiceProviderDashboard /></ProtectedRoute>} />
-              
-              
-              {/* Core Features */}
-              <Route path="/feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
-              <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
-              <Route path="/weather" element={<ProtectedRoute><Weather /></ProtectedRoute>} />
-              <Route path="/market-prices" element={<ProtectedRoute><MarketPrices /></ProtectedRoute>} />
-              <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistantPage /></ProtectedRoute>} />
-              <Route path="/crop-doctor" element={<ProtectedRoute><CropDoctorPage /></ProtectedRoute>} />
-              <Route path="/interactive-map" element={<ProtectedRoute><InteractiveMapPage /></ProtectedRoute>} />
-              
-              {/* Expense Trackers */}
-              <Route path="/farmer-expenses" element={<ProtectedRoute><FarmerExpenseTracker /></ProtectedRoute>} />
-              <Route path="/buyer-expenses" element={<ProtectedRoute><BuyerExpenseTracker /></ProtectedRoute>} />
-              <Route path="/expert-expenses" element={<ProtectedRoute><ExpertExpenseTracker /></ProtectedRoute>} />
-              
-              {/* User-Specific & Action Pages */}
-              <Route path="/profile/:userId" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-              <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
-              <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
-              <Route path="/test-messaging" element={<ProtectedRoute><TestMessaging /></ProtectedRoute>} />
-              <Route path="/responsive-test" element={<ProtectedRoute><ResponsiveTest /></ProtectedRoute>} />
-              <Route path="/consultation-history" element={<ProtectedRoute><ConsultationHistory /></ProtectedRoute>} />
-              <Route path="/create-article" element={<ProtectedRoute><CreateArticlePage /></ProtectedRoute>} />
-              <Route path="/find-experts" element={<ProtectedRoute><ExpertsPage /></ProtectedRoute>} />
-              <Route path="/service-discovery" element={<ProtectedRoute><ServiceDiscovery /></ProtectedRoute>} />
-              <Route path="/services/tractor" element={<ProtectedRoute><TractorServicePage /></ProtectedRoute>} />
-              <Route path="/services/harvester" element={<ProtectedRoute><HarvesterServicePage /></ProtectedRoute>} />
-              <Route path="/services/supplier" element={<ProtectedRoute><SupplierServicePage /></ProtectedRoute>} />
-              <Route path="/services/manufacturer" element={<ProtectedRoute><ManufacturerServicePage /></ProtectedRoute>} />
-              <Route path="/farmer/services/offer-tractor" element={<ProtectedRoute><OfferTractorServicePage /></ProtectedRoute>} />
-              <Route path="/farmer/services/offer-harvester" element={<ProtectedRoute><OfferHarvesterServicePage /></ProtectedRoute>} />
-              <Route path="/buyer/services/offer-supplier" element={<ProtectedRoute><OfferSupplierServicePage /></ProtectedRoute>} />
+            <BrowserRouter>
+              <Routes>
+                {/* === Public Routes (Accessible without login) === */}
+                <Route path="/auth/login" element={<Login />} />
+                <Route path="/auth/register" element={<Register />} />
+                <Route path="/auth/forgot-password" element={<ForgotPassword />} />
 
-              {/* --- TEMPORARY ROUTE FOR ROLE FIX --- */}
-              <Route path="/set-expert-role" element={<ProtectedRoute><SetExpertRolePage /></ProtectedRoute>} />
+                {/* === Protected Routes (Require login) === */}
+                <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+                <Route path="/select-role" element={<ProtectedRoute><SelectRole /></ProtectedRoute>} />
 
-              {/* === Catch-all Route for 404 Not Found === */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+                {/* Dashboards */}
+                <Route path="/farmer-dashboard" element={<ProtectedRoute><FarmerDashboard /></ProtectedRoute>} />
+                <Route path="/buyer-dashboard" element={<ProtectedRoute><BuyerDashboard /></ProtectedRoute>} />
+                <Route path="/expert-dashboard" element={<ProtectedRoute><ExpertDashboard /></ProtectedRoute>} />
+                <Route path="/service-provider-dashboard" element={<ProtectedRoute><ServiceProviderDashboard /></ProtectedRoute>} />
+
+
+                {/* Core Features */}
+                <Route path="/feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
+                <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
+                <Route path="/weather" element={<ProtectedRoute><Weather /></ProtectedRoute>} />
+                <Route path="/market-prices" element={<ProtectedRoute><MarketPrices /></ProtectedRoute>} />
+                <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistantPage /></ProtectedRoute>} />
+                <Route path="/crop-doctor" element={<ProtectedRoute><CropDoctorPage /></ProtectedRoute>} />
+                <Route path="/interactive-map" element={<ProtectedRoute><InteractiveMapPage /></ProtectedRoute>} />
+
+                {/* Expense Trackers */}
+                <Route path="/farmer-expenses" element={<ProtectedRoute><FarmerExpenseTracker /></ProtectedRoute>} />
+                <Route path="/buyer-expenses" element={<ProtectedRoute><BuyerExpenseTracker /></ProtectedRoute>} />
+                <Route path="/expert-expenses" element={<ProtectedRoute><ExpertExpenseTracker /></ProtectedRoute>} />
+
+                {/* User-Specific & Action Pages */}
+                <Route path="/profile/:userId" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+                <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+                <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+                <Route path="/test-messaging" element={<ProtectedRoute><TestMessaging /></ProtectedRoute>} />
+                <Route path="/responsive-test" element={<ProtectedRoute><ResponsiveTest /></ProtectedRoute>} />
+                <Route path="/consultation-history" element={<ProtectedRoute><ConsultationHistory /></ProtectedRoute>} />
+                <Route path="/create-article" element={<ProtectedRoute><CreateArticlePage /></ProtectedRoute>} />
+                <Route path="/experts" element={<ProtectedRoute><ExpertsPage /></ProtectedRoute>} />
+                <Route path="/experts/:id" element={<ProtectedRoute><ExpertProfilePage /></ProtectedRoute>} />
+                <Route path="/book-consultation/:expertId/:typeId" element={<ProtectedRoute><BookConsultationForm /></ProtectedRoute>} />
+                <Route path="/service-discovery" element={<ProtectedRoute><ServiceDiscovery /></ProtectedRoute>} />
+                <Route path="/services/tractor" element={<ProtectedRoute><TractorServicePage /></ProtectedRoute>} />
+                <Route path="/services/harvester" element={<ProtectedRoute><HarvesterServicePage /></ProtectedRoute>} />
+                <Route path="/services/supplier" element={<ProtectedRoute><SupplierServicePage /></ProtectedRoute>} />
+                <Route path="/services/manufacturer" element={<ProtectedRoute><ManufacturerServicePage /></ProtectedRoute>} />
+                <Route path="/farmer/services/offer-tractor" element={<ProtectedRoute><OfferTractorServicePage /></ProtectedRoute>} />
+                <Route path="/farmer/services/offer-harvester" element={<ProtectedRoute><OfferHarvesterServicePage /></ProtectedRoute>} />
+                <Route path="/buyer/services/offer-supplier" element={<ProtectedRoute><OfferSupplierServicePage /></ProtectedRoute>} />
+                <Route path="/expert/manage-services" element={<ProtectedRoute><ManageServicesPage /></ProtectedRoute>} />
+                <Route path="/expert/manage-availability" element={<ProtectedRoute><ManageAvailabilityPage /></ProtectedRoute>} />
+
+                {/* --- TEMPORARY ROUTE FOR ROLE FIX --- */}
+                <Route path="/set-expert-role" element={<ProtectedRoute><SetExpertRolePage /></ProtectedRoute>} />
+
+                {/* === Catch-all Route for 404 Not Found === */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
           </TooltipProvider>
         </CallProvider>
       </SocketProvider>

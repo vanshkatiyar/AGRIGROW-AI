@@ -66,6 +66,7 @@ const callRoutes = require('./routes/callRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const geminiRoutes = require('./routes/geminiRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 const Service = require('./models/Service'); // Assuming the model exists
  
 app.use('/api/auth', authRoutes);
@@ -84,7 +85,8 @@ app.use('/api/calls', callRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/gemini', geminiRoutes);
-
+app.use('/api/notifications', notificationRoutes);
+ 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.json({

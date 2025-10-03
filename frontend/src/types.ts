@@ -14,6 +14,15 @@ export interface User {
     services?: ServiceProviderProfile[];
     products?: Product[];
     [key: string]: any;
+    expertDetails?: {
+        specializations: string[];
+        hourlyRate: number;
+        ratings: {
+            farmerId: string;
+            rating: number;
+            comment: string;
+        }[];
+    };
 }
 
 export interface Post {
@@ -196,20 +205,42 @@ export interface Article {
     updatedAt: string;
 }
 
+export interface ConsultationType {
+    _id: string;
+    expert: string;
+    title: string;
+    description: string;
+    duration_minutes: number;
+    price: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export interface Consultation {
     id: string;
     _id: string;
     farmer: User;
     expert: User;
-    issue: string;
-    cropType: string;
-    status: 'pending' | 'accepted' | 'rejected' | 'completed';
-    urgency: 'low' | 'medium' | 'high';
-    consultationDate?: string;
-    notes?: string;
+    consultationType: ConsultationType;
+    status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'RESCHEDULE_PROPOSED' | 'COMPLETED' | 'CANCELED' | 'CANCELED_BY_EXPERT';
+    requested_datetime: string;
+    scheduled_datetime?: string;
+    farmer_notes?: string;
+    expert_notes?: string;
+    meeting_link?: string;
+    attachments?: string[];
     createdAt: string;
     updatedAt: string;
 }
+
+export interface ExpertStats {
+    totalConsultations: number;
+    activeClients: number;
+    monthlyEarnings: number;
+    averageRating: number;
+    monthlyRevenue: { name: string; revenue: number }[];
+}
+
 export interface AIResponse {
   answer: string;
 }

@@ -158,7 +158,7 @@ const FarmerDashboard = () => {
                             </Link>
                         </Button>
                         <Button asChild variant="outline" className="hover-lift animate-slide-in-right animate-stagger-2">
-                            <Link to="/find-experts" className="flex items-center gap-2">
+                            <Link to="/experts" className="flex items-center gap-2">
                                 <Users className="h-5 w-5" />
                                 Consult Expert
                             </Link>

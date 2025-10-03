@@ -1,7 +1,7 @@
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
-import { getConsultationHistory } from '@/services/consultationService';
+import { consultationService } from '@/services/consultationService';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle, Clock } from 'lucide-react';
@@ -16,7 +16,7 @@ const ConsultationHistory = () => {
     const { user } = useAuth();
     const { data: history = [], isLoading, isError, error } = useQuery<Consultation[]>({
         queryKey: ['consultationHistory', user?.id],
-        queryFn: getConsultationHistory,
+        queryFn: () => consultationService.getConsultations(),
         enabled: !!user,
     });
 

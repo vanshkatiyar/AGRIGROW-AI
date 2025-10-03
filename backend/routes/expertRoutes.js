@@ -1,7 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const { getAllExperts } = require('../controllers/expertController');
 const Consultation = require('../models/Consultation');
 const { protect } = require('../middleware/authMiddleware');
+
+// @route   GET /api/experts
+// @desc    Get all experts
+// @access  Public
+router.get('/', getAllExperts);
 
 // @route   GET /api/experts/stats
 // @desc    Get dashboard statistics for the logged-in expert

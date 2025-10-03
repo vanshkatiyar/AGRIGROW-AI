@@ -1,61 +1,85 @@
-// frontend/src/components/consultations/BookConsultationForm.tsx
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { REAL_CROP_DATA } from "@/utils/realCropData";
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { consultationService } from '../../services/consultationService';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
+import { useToast } from '../../hooks/use-toast';
 
-const cropOptions = Object.keys(REAL_CROP_DATA);
+const BookConsultationForm = () => {
+    const { expertId, typeId } = useParams();
+    const navigate = useNavigate();
+    const { toast } = useToast();
+    const [formData, setFormData] = useState({
+        requested_datetime: '',
+        farmer_notes: '',
+        attachments: []
+    });
 
-const formSchema = z.object({
-  cropType: z.string({ required_error: "Please select the crop." }),
-  issue: z.string().min(10, "Please describe the issue in at least 10 characters."),
-  urgency: z.enum(["low", "medium", "high", "critical"]),
-});
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
 
-type FormData = z.infer<typeof formSchema> & { expertId: string };
+    const handleFileChange = (e) => {
+        setFormData({ ...formData, attachments: e.target.files });
+    };
 
-interface BookConsultationFormProps {
-  expertId: string;
-  onSubmit: (data: FormData) => void;
-  onClose: () => void;
-  isPending: boolean;
-}
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const data = new FormData();
+            data.append('expertId', expertId);
+            data.append('consultationTypeId', typeId);
+            data.append('requested_datetime', formData.requested_datetime);
+            data.append('farmer_notes', formData.farmer_notes);
+            for (let i = 0; i < formData.attachments.length; i++) {
+                data.append('attachments', formData.attachments[i]);
+            }
 
-export const BookConsultationForm: React.FC<BookConsultationFormProps> = ({ expertId, onSubmit, onClose, isPending }) => {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { urgency: 'medium' },
-  });
+            await consultationService.requestConsultation(data);
+            toast({ title: 'Success', description: 'Consultation requested successfully!' });
+            navigate('/dashboard');
+        } catch (error) {
+            console.error('Error booking consultation:', error);
+            toast({ title: 'Error', description: 'Failed to book consultation.', variant: 'destructive' });
+        }
+    };
 
-  const handleFormSubmit = (values: z.infer<typeof formSchema>) => {
-    onSubmit({ ...values, expertId });
-  };
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
-        <FormField control={form.control} name="cropType" render={({ field }) => (
-          <FormItem><FormLabel>Affected Crop</FormLabel><Select onValueChange={field.onChange}><FormControl><SelectTrigger><SelectValue placeholder="Select a crop" /></SelectTrigger></FormControl><SelectContent>{cropOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
-        )} />
-        <FormField control={form.control} name="issue" render={({ field }) => (
-          <FormItem><FormLabel>Describe the Issue</FormLabel><FormControl><Textarea placeholder="e.g., The leaves on my tomato plants are turning yellow..." className="min-h-[100px]" {...field} /></FormControl><FormMessage /></FormItem>
-        )} />
-        <FormField control={form.control} name="urgency" render={({ field }) => (
-          <FormItem><FormLabel>Urgency</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem><SelectItem value="critical">Critical</SelectItem></SelectContent></Select><FormMessage /></FormItem>
-        )} />
-        
-        {/* We can add image uploads here in the future */}
-
-        <div className="flex justify-end gap-2 pt-4">
-          <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button type="submit" disabled={isPending}>{isPending ? 'Sending...' : 'Send Request'}</Button>
-        </div>
-      </form>
-    </Form>
-  );
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+                <label htmlFor="requested_datetime">Preferred Date and Time</label>
+                <Input
+                    type="datetime-local"
+                    id="requested_datetime"
+                    name="requested_datetime"
+                    value={formData.requested_datetime}
+                    onChange={handleChange}
+                    required
+                />
+            </div>
+            <div>
+                <label htmlFor="farmer_notes">Notes for the Expert</label>
+                <Textarea
+                    id="farmer_notes"
+                    name="farmer_notes"
+                    value={formData.farmer_notes}
+                    onChange={handleChange}
+                />
+            </div>
+            <div>
+                <label htmlFor="attachments">Attach Files</label>
+                <Input
+                    type="file"
+                    id="attachments"
+                    name="attachments"
+                    onChange={handleFileChange}
+                    multiple
+                />
+            </div>
+            <Button type="submit">Request Consultation</Button>
+        </form>
+    );
 };
+
+export default BookConsultationForm;

@@ -12,22 +12,21 @@ const userSchema = new mongoose.Schema({
     profileImage: { type: String, default: 'https://i.pravatar.cc/150?u=default' },
     coverPhoto: { type: String, default: 'https://source.unsplash.com/1600x900/?nature,landscape' },
 
-    // --- EXPERT-SPECIFIC DATA ---
+
     expertDetails: {
-        specializations: {
-            type: [String],
-            default: [],
-        },
-        experienceYears: {
-            type: Number,
-            default: 0,
-        }
+        specializations: [String],
+        hourlyRate: Number,
+        ratings: [{
+            farmerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+            rating: Number,
+            comment: String,
+        }],
     },
 
     // --- MESSAGING-RELATED FIELDS ---
-    lastSeen: { 
-        type: Date, 
-        default: Date.now 
+    lastSeen: {
+        type: Date,
+        default: Date.now
     },
     isOnline: { 
         type: Boolean, 

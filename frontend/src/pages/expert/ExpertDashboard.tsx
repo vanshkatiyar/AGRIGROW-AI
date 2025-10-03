@@ -59,8 +59,8 @@ const ExpertDashboard = () => {
         onError: (err: any) => toast({ title: "Error", description: err.message, variant: 'destructive' }),
     });
 
-    const handleAccept = (consultationId: string) => {
-        statusUpdateMutation.mutate({ consultationId, status: 'accepted' });
+    const handleAccept = (consultationId: string, requested_datetime: string) => {
+        statusUpdateMutation.mutate({ consultationId, status: 'ACCEPTED', scheduled_datetime: requested_datetime });
     };
 
     const stats = [
@@ -70,13 +70,6 @@ const ExpertDashboard = () => {
         { label: 'Average Rating', value: (statsData?.averageRating ?? 0).toFixed(1), icon: Star, color: 'text-yellow-600' }
     ];
 
-    const urgencyColors: { [key: string]: string } = {
-        low: 'text-green-600 bg-green-50 dark:bg-green-950/20',
-        medium: 'text-yellow-600 bg-yellow-50 dark:bg-yellow-950/20',
-        high: 'text-orange-600 bg-orange-50 dark:bg-orange-950/20',
-        critical: 'text-red-600 bg-red-50 dark:bg-red-950/20'
-    };
-    
     const renderRequests = () => {
         if (isLoadingRequests) return <div className="flex justify-center p-8"><LoadingSpinner /></div>;
         if (isErrorRequests) return <Alert variant="destructive" className="mx-6"><AlertTriangle className="h-4 w-4" /><AlertTitle>Failed to load requests</AlertTitle><AlertDescription>{(errorRequests as any)?.message || "An error occurred."}</AlertDescription></Alert>;
@@ -85,8 +78,8 @@ const ExpertDashboard = () => {
         return consultationRequests.map((consultation) => (
             <div key={consultation.id} className="border-b last:border-b-0 px-6 py-4">
                 <div className="flex flex-col sm:flex-row items-start justify-between gap-2">
-                    <div className="flex items-start gap-3"><Avatar className="h-10 w-10"><AvatarImage src={consultation.farmer.profileImage} /><AvatarFallback>{consultation.farmer.name.charAt(0)}</AvatarFallback></Avatar><div><h4 className="font-semibold">{consultation.farmer.name}</h4><p className="text-sm text-muted-foreground">{consultation.farmer.location} • {consultation.cropType}</p><p className="text-sm mt-1">{consultation.issue}</p></div></div>
-                    <div className="flex flex-col items-start sm:items-end gap-2 w-full sm:w-auto"><Badge className={urgencyColors[consultation.urgency]}>{consultation.urgency}</Badge><div className="flex items-center justify-end gap-2 w-full"><Button size="sm" variant="outline"><AlertCircle className="h-4 w-4 mr-1" />Details</Button><Button size="sm" onClick={() => handleAccept(consultation._id)} disabled={statusUpdateMutation.isPending}><CheckCircle className="h-4 w-4 mr-1" />Accept</Button></div></div>
+                    <div className="flex items-start gap-3"><Avatar className="h-10 w-10"><AvatarImage src={consultation.farmer.profileImage} /><AvatarFallback>{consultation.farmer.name.charAt(0)}</AvatarFallback></Avatar><div><h4 className="font-semibold">{consultation.farmer.name}</h4><p className="text-sm text-muted-foreground">{consultation.farmer.location} • {consultation.consultationType.title}</p><p className="text-sm mt-1">{consultation.farmer_notes}</p></div></div>
+                    <div className="flex flex-col items-start sm:items-end gap-2 w-full sm:w-auto"><Badge className="text-yellow-600 bg-yellow-50 dark:bg-yellow-950/20">Pending</Badge><div className="flex items-center justify-end gap-2 w-full"><Button size="sm" variant="outline"><AlertCircle className="h-4 w-4 mr-1" />Details</Button><Button size="sm" onClick={() => handleAccept(consultation._id, consultation.requested_datetime)} disabled={statusUpdateMutation.isPending}><CheckCircle className="h-4 w-4 mr-1" />Accept</Button></div></div>
                 </div>
             </div>
         ));
